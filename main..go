@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 
+	"github.com/dwethmar/apostle/component/movement"
+	"github.com/dwethmar/apostle/component/path"
 	"github.com/dwethmar/apostle/drawer"
 	"github.com/dwethmar/apostle/entity"
-	"github.com/dwethmar/apostle/entity/movement"
 	"github.com/dwethmar/apostle/locomotion"
+	"github.com/dwethmar/apostle/point"
 	"github.com/dwethmar/apostle/terrain"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -45,12 +48,16 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(log.Writer(), &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
 	tr := terrain.New()
 	for s := range tr.Walk() {
 		if s.X%2 == 0 && s.Y%2 == 0 {
 			// Fill every second cell with solid terrain
 			if err := tr.Fill(s.X, s.Y, terrain.Solid); err != nil {
-				log.Fatalf("failed to fill cell (%d, %d): %v", s.X, s.Y, err)
+				logger.Error("failed to fill cell", "x", s.X, "y", s.Y, "error", err)
 			}
 		}
 
@@ -66,26 +73,25 @@ func main() {
 	entityStore.CreateEntity(1, 1)
 
 	e := entityStore.CreateEntity(10, 10)
-	m := movement.NewComponent()
 
-	m.Data.(*movement.Movement).Dest.X = 11
-	m.Data.(*movement.Movement).Dest.Y = 11
-	m.Data.(*movement.Movement).Steps = 50
-	m.Data.(*movement.Movement).CurrentStep = 0
+	m := movement.NewComponent(e.ID)
+	entityStore.AddComponent(m)
 
-	entityStore.AddComponent(e.ID, *m)
+	p := path.NewComponent(e.ID)
+	p.AddCells(point.P{X: 12, Y: 11}, point.P{X: 13, Y: 11}, point.P{X: 14, Y: 11}, point.P{X: 14, Y: 12}, point.P{X: 14, Y: 13})
+	entityStore.AddComponent(p)
 
 	game := &Game{
 		drawers: []Drawer{
 			drawer.New(tr, entityStore),
 		},
 		systems: []System{
-			locomotion.New(entityStore),
+			locomotion.New(logger, entityStore),
 		},
 	}
 
 	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("Grid Renderer")
+	ebiten.SetWindowTitle("Apostle")
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

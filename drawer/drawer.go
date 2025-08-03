@@ -3,8 +3,9 @@ package drawer
 import (
 	"image/color"
 
+	"github.com/dwethmar/apostle/component/movement"
+	"github.com/dwethmar/apostle/component/path"
 	"github.com/dwethmar/apostle/entity"
-	"github.com/dwethmar/apostle/entity/movement"
 	"github.com/dwethmar/apostle/terrain"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -16,6 +17,7 @@ var (
 	colorSolid  = color.RGBA{0, 128, 0, 255}
 	colorBorder = color.RGBA{255, 0, 0, 255}
 	colorEntity = color.RGBA{255, 255, 0, 255} // Yellow for entities
+	colorPath   = color.RGBA{0, 0, 255, 255}   // Blue for paths
 )
 
 type Drawer struct {
@@ -58,17 +60,23 @@ func (d *Drawer) Draw(screen *ebiten.Image) {
 		x := float32(e.Pos.X) * cellSize
 		y := float32(e.Pos.Y) * cellSize
 
-		if m, ok := d.entityStore.GetComponent(e.ID, movement.Type); ok {
-			md := m.Data.(*movement.Movement)
-			if md.CurrentStep < md.Steps {
-				progress := float32(md.CurrentStep) / float32(md.Steps)
-				endX := float32(md.Dest.X) * cellSize
-				endY := float32(md.Dest.Y) * cellSize
+		if c, ok := d.entityStore.GetComponent(e.ID, movement.Type); ok {
+			m, ok := c.(*movement.Movement)
+			if ok && !m.AtDestination() {
+				progress := float32(m.CurrentStep()) / float32(m.Steps())
+				endX := float32(m.Destination().X) * cellSize
+				endY := float32(m.Destination().Y) * cellSize
 				x += (endX - x) * progress
 				y += (endY - y) * progress
 			}
 		}
 
 		drawEntityDiamond(screen, x, y)
+	}
+
+	for _, p := range d.entityStore.Components("Path") {
+		if pathComp, ok := p.(*path.Path); ok {
+			drawPath(screen, pathComp.Cells())
+		}
 	}
 }
