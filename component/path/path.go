@@ -5,6 +5,8 @@ import (
 	"github.com/dwethmar/apostle/point"
 )
 
+const Type = "Path"
+
 type Path struct {
 	*component.Component
 	cells   []point.P
@@ -13,12 +15,9 @@ type Path struct {
 
 func NewComponent(entityID int) *Path {
 	return &Path{
-		Component: &component.Component{
-			EID: entityID,
-			T:   "Path",
-		},
-		cells:   make([]point.P, 0),
-		current: 0,
+		Component: component.NewComponent(entityID, Type),
+		cells:     make([]point.P, 0),
+		current:   0,
 	}
 }
 
@@ -37,7 +36,7 @@ func (p *Path) CurrentCell() point.P {
 	return point.P{} // Return zero value if no current cell
 }
 
-func (p *Path) NextCell() bool {
+func (p *Path) Next() bool {
 	if p.current+1 < len(p.cells) {
 		p.current++
 		return true
@@ -49,7 +48,20 @@ func (p *Path) AtDestination() bool {
 	return p.current >= len(p.cells)-1
 }
 
+func (p *Path) Destination() (point.P, bool) {
+	if p.current < len(p.cells) {
+		return p.cells[p.current], true
+	}
+	return point.P{}, false // Return zero value if no destination
+}
+
+// Reset resets the path to the beginning
 func (p *Path) Reset() {
 	p.current = 0
-	p.cells = make([]point.P, 0) // Clear the path
+}
+
+// Clear clears the path, removing all cells and resetting the current index
+func (p *Path) Clear() {
+	p.cells = make([]point.P, 0)
+	p.current = 0
 }

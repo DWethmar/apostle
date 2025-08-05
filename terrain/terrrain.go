@@ -3,6 +3,8 @@ package terrain
 import (
 	"fmt"
 	"iter"
+
+	"github.com/dwethmar/apostle/point"
 )
 
 type (
@@ -21,6 +23,10 @@ const (
 	South
 	East
 	West
+	NorthEast
+	NorthWest
+	SouthEast
+	SouthWest
 )
 
 // Solidity, border and other flags for terrain cells
@@ -45,12 +51,13 @@ func New() *Terrain {
 	}
 }
 
-func inbounds(width, height, x, y int) bool {
+func (t *Terrain) InBounds(x, y int) bool {
+	// calc if x and y are within the bounds of the terrain
 	return x >= 0 && x < width && y >= 0 && y < height
 }
 
 func (t *Terrain) Fill(x, y int, cell Cell) error {
-	if !inbounds(width, height, x, y) {
+	if !t.InBounds(x, y) {
 		return fmt.Errorf("coordinates exceed bounds: (%d, %d) out of (%d, %d)", x, y, width, height)
 	}
 	t.cells[y][x] = cell
@@ -58,14 +65,14 @@ func (t *Terrain) Fill(x, y int, cell Cell) error {
 }
 
 func (t *Terrain) Solid(x, y int) bool {
-	if !inbounds(width, height, x, y) {
+	if !t.InBounds(x, y) {
 		return false
 	}
 	return t.cells[y][x]&Solid != 0
 }
 
 func (t *Terrain) HasFlag(x, y int, flag Cell) bool {
-	return inbounds(width, height, x, y) && (t.cells[y][x]&flag != 0)
+	return t.InBounds(x, y) && (t.cells[y][x]&flag != 0)
 }
 
 func (t *Terrain) HasCeiling(x, y int) bool {
@@ -79,7 +86,7 @@ func (t *Terrain) HasFloor(x, y int) bool {
 var borderFlags = []Cell{BorderNorth, BorderSouth, BorderEast, BorderWest}
 
 func (t *Terrain) Walls(x, y int) []Cell {
-	if !inbounds(width, height, x, y) {
+	if !t.InBounds(x, y) {
 		return nil
 	}
 	cell := t.cells[y][x]
@@ -98,21 +105,26 @@ type moveInfo struct {
 }
 
 var moves = map[Direction]moveInfo{
-	North: {0, -1, BorderNorth, BorderSouth},
-	South: {0, 1, BorderSouth, BorderNorth},
-	East:  {1, 0, BorderEast, BorderWest},
-	West:  {-1, 0, BorderWest, BorderEast},
+	North:     {0, -1, BorderNorth, BorderSouth},
+	South:     {0, 1, BorderSouth, BorderNorth},
+	East:      {1, 0, BorderEast, BorderWest},
+	West:      {-1, 0, BorderWest, BorderEast},
+	NorthEast: {1, -1, BorderNorth, BorderSouth},
+	NorthWest: {-1, -1, BorderNorth, BorderSouth},
+	SouthEast: {1, 1, BorderSouth, BorderNorth},
+	SouthWest: {-1, 1, BorderSouth, BorderNorth},
 }
 
-func (t *Terrain) Traversable(x, y int, d Direction) bool {
+// Traversable checks if a point is traversable in a given direction.
+func (t *Terrain) Traversable(p point.P, d Direction) bool {
 	move := moves[d]
-	newX, newY := x+move.dx, y+move.dy
+	newX, newY := p.X+move.dx, p.Y+move.dy
 
-	if !inbounds(width, height, newX, newY) {
+	if !t.InBounds(newX, newY) {
 		return false
 	}
 
-	if t.cells[y][x]&move.currentBorder != 0 {
+	if t.cells[p.Y][p.X]&move.currentBorder != 0 {
 		return false
 	}
 	if t.cells[newY][newX]&move.targetBorder != 0 {

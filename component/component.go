@@ -6,6 +6,13 @@ type Component struct {
 	T   string // Type of the component, e.g., "Position", "Health", etc.
 }
 
+func NewComponent(entityID int, componentType string) *Component {
+	return &Component{
+		EID: entityID,
+		T:   componentType,
+	}
+}
+
 func (c *Component) EntityID() int {
 	return c.EID
 }

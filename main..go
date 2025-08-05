@@ -5,12 +5,13 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/dwethmar/apostle/component/movement"
-	"github.com/dwethmar/apostle/component/path"
+	"github.com/dwethmar/apostle/behavior"
+	"github.com/dwethmar/apostle/component/factory"
 	"github.com/dwethmar/apostle/drawer"
 	"github.com/dwethmar/apostle/entity"
+	"github.com/dwethmar/apostle/event"
 	"github.com/dwethmar/apostle/locomotion"
-	"github.com/dwethmar/apostle/point"
+	"github.com/dwethmar/apostle/pathfinding/astar"
 	"github.com/dwethmar/apostle/terrain"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -69,17 +70,16 @@ func main() {
 		}
 	}
 
+	eventBus := event.NewBus(0)
+	componentFactory := factory.NewFactory(eventBus)
+
 	entityStore := entity.NewStore()
 	entityStore.CreateEntity(1, 1)
 
-	e := entityStore.CreateEntity(10, 10)
-
-	m := movement.NewComponent(e.ID)
-	entityStore.AddComponent(m)
-
-	p := path.NewComponent(e.ID)
-	p.AddCells(point.P{X: 12, Y: 11}, point.P{X: 13, Y: 11}, point.P{X: 14, Y: 11}, point.P{X: 14, Y: 12}, point.P{X: 14, Y: 13})
-	entityStore.AddComponent(p)
+	e := entityStore.CreateEntity(11, 11)
+	entityStore.AddComponent(componentFactory.NewMovementComponent(e.ID()))
+	entityStore.AddComponent(componentFactory.NewPathComponent(e.ID()))
+	entityStore.AddComponent(componentFactory.NewAgentComponent(e.ID()))
 
 	game := &Game{
 		drawers: []Drawer{
@@ -87,6 +87,7 @@ func main() {
 		},
 		systems: []System{
 			locomotion.New(logger, entityStore),
+			behavior.New(logger, componentFactory, entityStore, astar.New(tr)),
 		},
 	}
 

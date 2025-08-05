@@ -57,10 +57,11 @@ func (d *Drawer) Draw(screen *ebiten.Image) {
 	}
 
 	for _, e := range d.entityStore.Entities() {
-		x := float32(e.Pos.X) * cellSize
-		y := float32(e.Pos.Y) * cellSize
+		pos := e.Pos()
+		x := float32(pos.X) * cellSize
+		y := float32(pos.Y) * cellSize
 
-		if c, ok := d.entityStore.GetComponent(e.ID, movement.Type); ok {
+		if c, ok := d.entityStore.GetComponent(e.ID(), movement.Type); ok {
 			m, ok := c.(*movement.Movement)
 			if ok && !m.AtDestination() {
 				progress := float32(m.CurrentStep()) / float32(m.Steps())

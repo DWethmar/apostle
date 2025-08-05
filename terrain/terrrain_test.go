@@ -3,21 +3,22 @@ package terrain_test
 import (
 	"testing"
 
+	"github.com/dwethmar/apostle/point"
 	"github.com/dwethmar/apostle/terrain"
 )
 
 func TestTraversable_NoObstacles(t *testing.T) {
 	tr := terrain.New()
-	if !tr.Traversable(10, 10, terrain.North) {
+	if !tr.Traversable(point.New(10, 10), terrain.North) {
 		t.Errorf("expected traversable north")
 	}
-	if !tr.Traversable(10, 10, terrain.South) {
+	if !tr.Traversable(point.New(10, 10), terrain.South) {
 		t.Errorf("expected traversable south")
 	}
-	if !tr.Traversable(10, 10, terrain.East) {
+	if !tr.Traversable(point.New(10, 10), terrain.East) {
 		t.Errorf("expected traversable east")
 	}
-	if !tr.Traversable(10, 10, terrain.West) {
+	if !tr.Traversable(point.New(10, 10), terrain.West) {
 		t.Errorf("expected traversable west")
 	}
 }
@@ -27,10 +28,10 @@ func TestTraversable_SolidBlocksMovement(t *testing.T) {
 	if err := tr.Fill(10, 9, terrain.Solid); err != nil { // solid block north of (10,10)
 		t.Fatalf("failed to fill solid cell: %v", err)
 	}
-	if tr.Traversable(10, 10, terrain.North) {
+	if tr.Traversable(point.New(10, 10), terrain.North) {
 		t.Errorf("expected blocked north due to solid cell")
 	}
-	if !tr.Traversable(10, 10, terrain.South) {
+	if !tr.Traversable(point.New(10, 10), terrain.South) {
 		t.Errorf("expected traversable south")
 	}
 }
@@ -42,7 +43,7 @@ func TestTraversable_BorderBlocksMovement(t *testing.T) {
 	if err := tr.Fill(10, 10, terrain.BorderNorth); err != nil {
 		t.Fatalf("failed to fill border cell %d %d: %v", 10, 10, err)
 	}
-	if tr.Traversable(10, 10, terrain.North) {
+	if tr.Traversable(point.New(10, 10), terrain.North) {
 		t.Errorf("expected blocked north due to border on current cell")
 	}
 
@@ -53,7 +54,7 @@ func TestTraversable_BorderBlocksMovement(t *testing.T) {
 	if err := tr.Fill(10, 9, terrain.BorderSouth); err != nil {
 		t.Fatalf("failed to fill border cell %d %d: %v", 10, 9, err)
 	}
-	if tr.Traversable(10, 10, terrain.North) {
+	if tr.Traversable(point.New(10, 10), terrain.North) {
 		t.Errorf("expected blocked north due to border on target cell")
 	}
 }
@@ -62,13 +63,13 @@ func TestTraversable_BordersDontBlockOtherDirections(t *testing.T) {
 	tr := terrain.New()
 	_ = tr.Fill(10, 10, terrain.BorderNorth)
 
-	if !tr.Traversable(10, 10, terrain.South) {
+	if !tr.Traversable(point.New(10, 10), terrain.South) {
 		t.Errorf("expected traversable south")
 	}
-	if !tr.Traversable(10, 10, terrain.East) {
+	if !tr.Traversable(point.New(10, 10), terrain.East) {
 		t.Errorf("expected traversable east")
 	}
-	if !tr.Traversable(10, 10, terrain.West) {
+	if !tr.Traversable(point.New(10, 10), terrain.West) {
 		t.Errorf("expected traversable west")
 	}
 }
@@ -76,16 +77,16 @@ func TestTraversable_BordersDontBlockOtherDirections(t *testing.T) {
 func TestTraversable_OutOfBounds(t *testing.T) {
 	tr := terrain.New()
 
-	if tr.Traversable(0, 0, terrain.West) {
+	if tr.Traversable(point.New(0, 0), terrain.West) {
 		t.Errorf("expected blocked west out of bounds")
 	}
-	if tr.Traversable(0, 0, terrain.North) {
+	if tr.Traversable(point.New(0, 0), terrain.North) {
 		t.Errorf("expected blocked north out of bounds")
 	}
-	if tr.Traversable(19, 19, terrain.South) {
+	if tr.Traversable(point.New(19, 19), terrain.South) {
 		t.Errorf("expected blocked south out of bounds")
 	}
-	if tr.Traversable(19, 19, terrain.East) {
+	if tr.Traversable(point.New(19, 19), terrain.East) {
 		t.Errorf("expected blocked east out of bounds")
 	}
 }

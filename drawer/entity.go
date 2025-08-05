@@ -33,11 +33,11 @@ func drawEntityDiamond(screen *ebiten.Image, x, y float32) {
 }
 
 func drawPath(screen *ebiten.Image, points []point.P) {
-	var path vector.Path
-	for _, p := range points {
-		path.MoveTo(centerCellX(p.X), centerCellY(p.Y))
+	// vector.StrokeLine(screen, centerCellX(points[0].X), centerCellY(points[0].Y),
+	// 	centerCellX(points[len(points)-1].X), centerCellY(points[len(points)-1].Y), 2, colorPath, false)
+
+	for i := 0; i < len(points)-1; i++ {
+		vector.StrokeLine(screen, centerCellX(points[i].X), centerCellY(points[i].Y),
+			centerCellX(points[i+1].X), centerCellY(points[i+1].Y), 2, colorPath, false)
 	}
-	vector.StrokePath(screen, &path, colorPath, true, &vector.StrokeOptions{
-		Width: 4,
-	})
 }

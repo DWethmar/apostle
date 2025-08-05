@@ -25,28 +25,21 @@ func (s *Store) CreateEntity(x, y int) Entity {
 		id++
 	}
 	entity := &Entity{
-		ID:         id,
-		Pos:        point.P{X: x, Y: y},
+		id:         id,
+		pos:        point.P{X: x, Y: y},
 		components: make(map[string]Component),
 	}
 	s.entities[id] = entity
 	return *entity
 }
 
-func (s *Store) Entity(id int) Entity {
-	return *s.entities[id]
+func (s *Store) Entity(id int) (*Entity, bool) {
+	entity, exists := s.entities[id]
+	return entity, exists
 }
 
 func (s *Store) RemoveEntity(id int) {
 	delete(s.entities, id)
-}
-
-func (s *Store) UpdateEntity(e Entity) error {
-	if _, exists := s.entities[e.ID]; !exists {
-		return fmt.Errorf("entity with ID %d does not exist", e.ID)
-	}
-	s.entities[e.ID] = &e
-	return nil
 }
 
 func (s *Store) Entities() []*Entity {

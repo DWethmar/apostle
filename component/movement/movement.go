@@ -16,14 +16,15 @@ type Movement struct {
 	dest           point.P // Destination point for the movement
 	steps          int     // Number of steps to reach the destination
 	currentStep    int     // Current step in the movement
+
+	// event handling
+	movedEvent func(MovedEvent) // Callback for moved events
 }
 
 func NewComponent(entityID int) *Movement {
 	return &Movement{
-		Component: &component.Component{
-			EID: entityID,
-			T:   Type,
-		},
+		Component:      component.NewComponent(entityID, Type),
+		hasDestination: false,
 	}
 }
 

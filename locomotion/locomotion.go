@@ -11,7 +11,7 @@ import (
 	"github.com/dwethmar/apostle/point"
 )
 
-const defaultStepSize = 100 // Default step size for movement
+const defaultStepSize = 20 // Default step size for movement
 
 // calculateSteps calculates the number of steps needed to move from start to end
 // Uses Euclidean distance to ensure diagonal movement isn't faster than axis-aligned movement
@@ -22,6 +22,7 @@ func calculateSteps(start, end point.P, stepsPerUnit int) int {
 	return int(math.Ceil(distance * float64(stepsPerUnit)))
 }
 
+// Locomotion handles the movement of entities based on their paths and movement components.
 type Locomotion struct {
 	logger      *slog.Logger
 	entityStore *entity.Store
@@ -35,59 +36,49 @@ func New(logger *slog.Logger, entityStore *entity.Store) *Locomotion {
 }
 
 func (l *Locomotion) Update() error {
-	for _, c := range l.entityStore.Components("Movement") {
-		e := l.entityStore.Entity(c.EntityID())
+	for _, c := range l.entityStore.Components(movement.Type) {
+		e, ok := l.entityStore.Entity(c.EntityID())
+		if !ok {
+			return fmt.Errorf("entity with ID %d does not exist", c.EntityID())
+		}
 		m, ok := c.(*movement.Movement)
 		if !ok {
 			return fmt.Errorf("component %T is not a Movement component", c)
 		}
 		logger := l.logger.With("component", c.Type(), "entityID", c.EntityID(), "currentStep", m.CurrentStep(), "steps", m.Steps(), "destination", m.Destination())
 
-		hasAdvanced := false
-		if !m.AtDestination() {
-			// logger.Debug("Advancing step for entity", "currentPos", e.Pos)
-			m.AdvanceStep()
-			hasAdvanced = true
-		}
-
-		if hasAdvanced && m.AtDestination() { // Reached destination
-			logger.Debug("Entity reached destination")
-			e.Pos.X = m.Destination().X
-			e.Pos.Y = m.Destination().Y
-			if err := l.entityStore.UpdateEntity(e); err != nil {
-				return fmt.Errorf("failed to update entity %d: %w", e.ID, err)
-			}
-		}
-
 		// check if the entity has a path component
-		if c, ok := l.entityStore.GetComponent(e.ID, "Path"); ok {
+		if c, ok := l.entityStore.GetComponent(e.ID(), path.Type); ok {
 			p, ok := c.(*path.Path)
 			if !ok {
 				return fmt.Errorf("component %T is not a Path component", c)
 			}
-
-			// If the entity has no destination, set it from the path component
+			// If the entity has no destination, set it from the path component if ther path has cells
 			if !m.HasDestination() {
-				steps := calculateSteps(e.Pos, p.CurrentCell(), defaultStepSize)
-				logger.Debug("Entity has no path destination, setting new destination", "currentPos", e.Pos, "destination", p.CurrentCell(), "steps", steps)
-				m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
+				if len(p.Cells()) > 0 {
+					steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
+					logger.Debug("Entity has no path destination, setting new destination", "currentPos", e.Pos, "destination", p.CurrentCell(), "steps", steps)
+					m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
+				} else {
+					m.SetDestination(e.Pos(), 0) // No path cells, stay at current position
+				}
 			} else {
 				// If the entity is at its destination and the path has more cells, move to the next cell
-				if m.AtDestination() {
-					if p.AtDestination() {
-						cells := p.Cells()
-						logger.Debug("Path completed, resetting path", "entityID", e.ID, "cells", cells)
-						p.Reset()            // Reset path if no more cells
-						p.AddCells(cells...) // Re-add cells to path
-						steps := calculateSteps(e.Pos, p.CurrentCell(), defaultStepSize)
-						m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
-					} else if p.NextCell() {
-						steps := calculateSteps(e.Pos, p.CurrentCell(), defaultStepSize)
-						logger.Debug("Entity at destination, moving to next path cell", "entityID", e.ID, "nextCell", p.CurrentCell(), "steps", steps)
-						m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
-					}
+				if m.AtDestination() && p.Next() {
+					steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
+					logger.Debug("Entity at destination, moving to next path cell", "entityID", e.ID, "nextCell", p.CurrentCell(), "steps", steps)
+					m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
 				}
 			}
+		}
+
+		if !m.AtDestination() {
+			m.AdvanceStep()
+		}
+
+		if m.AtDestination() && !e.Pos().Equal(m.Destination()) { // Reached destination and we didn't update the entity position yet
+			logger.Debug("Entity reached destination")
+			e.SetPos(m.Destination())
 		}
 	}
 	return nil
