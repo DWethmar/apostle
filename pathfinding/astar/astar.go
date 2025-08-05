@@ -11,8 +11,8 @@ import (
 type node struct {
 	x, y   int
 	gCost  float64
-	hCost  float64
-	fCost  float64
+	hCost  float64 // hCost is the heuristic cost to the goal
+	fCost  float64 // fCost is the total cost (gCost + hCost)
 	parent *node
 	index  int
 }
@@ -26,11 +26,13 @@ func (pq priorityQueue) Swap(i, j int) {
 	pq[i].index = i
 	pq[j].index = j
 }
+
 func (pq *priorityQueue) Push(x any) {
 	n := x.(*node)
 	n.index = len(*pq)
 	*pq = append(*pq, n)
 }
+
 func (pq *priorityQueue) Pop() any {
 	old := *pq
 	n := old[len(old)-1]
@@ -74,7 +76,7 @@ func (a *AStar) Find(start, end point.P) []point.P {
 	heap.Init(openSet)
 	heap.Push(openSet, startNode)
 
-	closedSet := make(map[[2]int]bool)
+	closedSet := make(map[[2]int]bool) // Using a map for closed set to track visited nodes
 
 	for openSet.Len() > 0 {
 		current := heap.Pop(openSet).(*node)
@@ -95,13 +97,17 @@ func (a *AStar) Find(start, end point.P) []point.P {
 				continue
 			}
 
-			if isDiagonal(dir) {
-				if !canMoveDiagonally(a.terrain, current.x, current.y, dir) {
-					continue
-				}
+			diagonal := isDiagonal(dir)
+			if diagonal && !canMoveDiagonally(a.terrain, current.x, current.y, dir) {
+				continue
 			}
 
-			gCost := current.gCost + 1
+			stepCost := 1.0
+			if diagonal { // Diagonal moves have a higher cost
+				stepCost = math.Sqrt2
+			}
+
+			gCost := current.gCost + stepCost
 			hCost := heuristic(newX, newY, goalX, goalY)
 			neighbor := &node{
 				x:      newX,

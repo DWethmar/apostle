@@ -87,6 +87,7 @@ func (b *Behavior) Update() error {
 				// For example, using the locomotion system to advance the movement component
 			} else {
 				// calculate steps to the first target
+				// TODO: neighbor the target entity. Do not step into the same cell.
 				targetID := targetEntities[0]
 				targetEntity, ok := b.entityStore.Entity(targetID)
 				if !ok {

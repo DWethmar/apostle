@@ -119,7 +119,7 @@ func TestBus_Subscriptions(t *testing.T) {
 	t.Run("get all subscriptions", func(t *testing.T) {
 		bus := event.NewBus(0)
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			bus.Subscribe(event.MatcherFunc(func(e event.Event) bool {
 				return e.Event() == "testEvent"
 			}), func(_ event.Event) error { return nil })
