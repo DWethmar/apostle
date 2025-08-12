@@ -3,6 +3,7 @@ package drawer
 import (
 	"image/color"
 
+	"github.com/dwethmar/apostle/component/kind"
 	"github.com/dwethmar/apostle/component/movement"
 	"github.com/dwethmar/apostle/component/path"
 	"github.com/dwethmar/apostle/entity"
@@ -18,6 +19,7 @@ var (
 	colorBorder = color.RGBA{255, 0, 0, 255}
 	colorEntity = color.RGBA{255, 255, 0, 255} // Yellow for entities
 	colorPath   = color.RGBA{0, 0, 255, 255}   // Blue for paths
+	colorApple  = color.RGBA{255, 0, 0, 255}   // Red for apples
 )
 
 type Drawer struct {
@@ -72,7 +74,18 @@ func (d *Drawer) Draw(screen *ebiten.Image) {
 			}
 		}
 
-		drawEntityDiamond(screen, x, y)
+		if c, ok := d.entityStore.GetComponent(e.ID(), kind.Type); ok {
+			k, ok := c.(*kind.Kind)
+			if !ok {
+				continue
+			}
+			switch k.Value() {
+			case kind.Human:
+				drawEntityDiamond(screen, x, y)
+			case kind.Apple:
+				drawApple(screen, x, y)
+			}
+		}
 	}
 
 	for _, p := range d.entityStore.Components("Path") {

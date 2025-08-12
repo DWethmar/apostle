@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"math/rand/v2"
 
 	"github.com/dwethmar/apostle/behavior"
 	"github.com/dwethmar/apostle/component/factory"
 	"github.com/dwethmar/apostle/drawer"
 	"github.com/dwethmar/apostle/entity"
+	"github.com/dwethmar/apostle/entity/blueprint"
 	"github.com/dwethmar/apostle/event"
 	"github.com/dwethmar/apostle/locomotion"
 	"github.com/dwethmar/apostle/pathfinding/astar"
+	"github.com/dwethmar/apostle/point"
 	"github.com/dwethmar/apostle/terrain"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -70,16 +73,22 @@ func main() {
 		}
 	}
 
-	eventBus := event.NewBus(0)
-	componentFactory := factory.NewFactory(eventBus)
-
 	entityStore := entity.NewStore()
-	entityStore.CreateEntity(1, 1)
+	eventBus := event.NewBus(0)
+	componentFactory := factory.NewFactory(eventBus, entityStore)
 
-	e := entityStore.CreateEntity(11, 11)
-	entityStore.AddComponent(componentFactory.NewMovementComponent(e.ID()))
-	entityStore.AddComponent(componentFactory.NewPathComponent(e.ID()))
-	entityStore.AddComponent(componentFactory.NewAgentComponent(e.ID()))
+	blueprint.NewHuman(point.New(11, 11), entityStore, componentFactory)
+	{
+		var x, y int
+		for range 1000 {
+			x = rand.IntN(tr.Width() - 1)
+			y = rand.IntN(tr.Height() - 1)
+			if !tr.Solid(x, y) {
+				break
+			}
+		}
+		blueprint.NewApple(point.New(x, y), entityStore, componentFactory)
+	}
 
 	game := &Game{
 		drawers: []Drawer{
@@ -91,8 +100,9 @@ func main() {
 		},
 	}
 
-	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowSize(800, 800)
 	ebiten.SetWindowTitle("Apostle")
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

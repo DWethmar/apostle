@@ -16,7 +16,7 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) CreateEntity(x, y int) Entity {
+func (s *Store) CreateEntity(pos point.P) *Entity {
 	var id int
 	for {
 		if _, exists := s.entities[id]; !exists {
@@ -26,11 +26,11 @@ func (s *Store) CreateEntity(x, y int) Entity {
 	}
 	entity := &Entity{
 		id:         id,
-		pos:        point.P{X: x, Y: y},
+		pos:        pos,
 		components: make(map[string]Component),
 	}
 	s.entities[id] = entity
-	return *entity
+	return entity
 }
 
 func (s *Store) Entity(id int) (*Entity, bool) {

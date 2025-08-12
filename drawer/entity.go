@@ -41,3 +41,9 @@ func drawPath(screen *ebiten.Image, points []point.P) {
 			centerCellX(points[i+1].X), centerCellY(points[i+1].Y), 2, colorPath, false)
 	}
 }
+
+func drawApple(screen *ebiten.Image, x, y float32) {
+	x += cellSize / 2
+	y += cellSize / 2
+	vector.FillCircle(screen, x, y, float32(cellSize)*0.4, colorApple, true)
+}

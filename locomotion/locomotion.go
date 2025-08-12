@@ -57,7 +57,7 @@ func (l *Locomotion) Update() error {
 			if !m.HasDestination() {
 				if len(p.Cells()) > 0 {
 					steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
-					logger.Debug("Entity has no path destination, setting new destination", "currentPos", e.Pos, "destination", p.CurrentCell(), "steps", steps)
+					logger.Debug("entity has no path destination, setting new destination", "currentPos", e.Pos, "destination", p.CurrentCell(), "steps", steps)
 					m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
 				} else {
 					m.SetDestination(e.Pos(), 0) // No path cells, stay at current position
@@ -66,7 +66,7 @@ func (l *Locomotion) Update() error {
 				// If the entity is at its destination and the path has more cells, move to the next cell
 				if m.AtDestination() && p.Next() {
 					steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
-					logger.Debug("Entity at destination, moving to next path cell", "entityID", e.ID, "nextCell", p.CurrentCell(), "steps", steps)
+					logger.Debug("entity is moving to next path cell", "entityID", e.ID, "nextCell", p.CurrentCell(), "steps", steps)
 					m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
 				}
 			}
@@ -77,7 +77,7 @@ func (l *Locomotion) Update() error {
 		}
 
 		if m.AtDestination() && !e.Pos().Equal(m.Destination()) { // Reached destination and we didn't update the entity position yet
-			logger.Debug("Entity reached destination")
+			logger.Debug("entity reached destination")
 			e.SetPos(m.Destination())
 		}
 	}

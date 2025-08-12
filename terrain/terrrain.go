@@ -4,29 +4,17 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/dwethmar/apostle/direction"
 	"github.com/dwethmar/apostle/point"
 )
 
 type (
-	Direction int
-	Cell      byte // 1 byte to store flags for solidity and borders
+	Cell byte // 1 byte to store flags for solidity and borders
 )
 
 const (
 	width  = 20
 	height = 20
-)
-
-// Direction flags for movement
-const (
-	North Direction = 1 << iota
-	South
-	East
-	West
-	NorthEast
-	NorthWest
-	SouthEast
-	SouthWest
 )
 
 // Solidity, border and other flags for terrain cells
@@ -68,7 +56,7 @@ func (t *Terrain) Solid(x, y int) bool {
 	if !t.InBounds(x, y) {
 		return false
 	}
-	return t.cells[y][x]&Solid != 0
+	return t.HasFlag(x, y, Solid)
 }
 
 func (t *Terrain) HasFlag(x, y int, flag Cell) bool {
@@ -99,24 +87,32 @@ func (t *Terrain) Walls(x, y int) []Cell {
 	return borders
 }
 
+func (t *Terrain) Width() int {
+	return width
+}
+
+func (t *Terrain) Height() int {
+	return height
+}
+
 type moveInfo struct {
 	dx, dy                      int
 	currentBorder, targetBorder Cell
 }
 
-var moves = map[Direction]moveInfo{
-	North:     {0, -1, BorderNorth, BorderSouth},
-	South:     {0, 1, BorderSouth, BorderNorth},
-	East:      {1, 0, BorderEast, BorderWest},
-	West:      {-1, 0, BorderWest, BorderEast},
-	NorthEast: {1, -1, BorderNorth, BorderSouth},
-	NorthWest: {-1, -1, BorderNorth, BorderSouth},
-	SouthEast: {1, 1, BorderSouth, BorderNorth},
-	SouthWest: {-1, 1, BorderSouth, BorderNorth},
+var moves = map[direction.Direction]moveInfo{
+	direction.North:     {0, -1, BorderNorth, BorderSouth},
+	direction.South:     {0, 1, BorderSouth, BorderNorth},
+	direction.East:      {1, 0, BorderEast, BorderWest},
+	direction.West:      {-1, 0, BorderWest, BorderEast},
+	direction.NorthEast: {1, -1, BorderNorth, BorderSouth},
+	direction.NorthWest: {-1, -1, BorderNorth, BorderSouth},
+	direction.SouthEast: {1, 1, BorderSouth, BorderNorth},
+	direction.SouthWest: {-1, 1, BorderSouth, BorderNorth},
 }
 
 // Traversable checks if a point is traversable in a given direction.
-func (t *Terrain) Traversable(p point.P, d Direction) bool {
+func (t *Terrain) Traversable(p point.P, d direction.Direction) bool {
 	move := moves[d]
 	newX, newY := p.X+move.dx, p.Y+move.dy
 

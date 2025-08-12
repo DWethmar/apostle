@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"math"
 
+	"github.com/dwethmar/apostle/direction"
 	"github.com/dwethmar/apostle/point"
 	"github.com/dwethmar/apostle/terrain"
 )
@@ -55,16 +56,16 @@ func New(t *terrain.Terrain) *AStar {
 	return &AStar{terrain: t}
 }
 
-func moves() map[terrain.Direction]struct{ Dx, Dy int } {
-	return map[terrain.Direction]struct{ Dx, Dy int }{
-		terrain.North:     {0, -1},
-		terrain.South:     {0, 1},
-		terrain.East:      {1, 0},
-		terrain.West:      {-1, 0},
-		terrain.NorthEast: {1, -1},
-		terrain.NorthWest: {-1, -1},
-		terrain.SouthEast: {1, 1},
-		terrain.SouthWest: {-1, 1},
+func moves() map[direction.Direction]struct{ Dx, Dy int } {
+	return map[direction.Direction]struct{ Dx, Dy int }{
+		direction.North:     {0, -1},
+		direction.South:     {0, 1},
+		direction.East:      {1, 0},
+		direction.West:      {-1, 0},
+		direction.NorthEast: {1, -1},
+		direction.NorthWest: {-1, -1},
+		direction.SouthEast: {1, 1},
+		direction.SouthWest: {-1, 1},
 	}
 }
 
@@ -132,27 +133,27 @@ func reconstructPath(n *node) []point.P {
 	return path
 }
 
-func isDiagonal(dir terrain.Direction) bool {
-	return dir == terrain.NorthEast ||
-		dir == terrain.NorthWest ||
-		dir == terrain.SouthEast ||
-		dir == terrain.SouthWest
+func isDiagonal(dir direction.Direction) bool {
+	return dir == direction.NorthEast ||
+		dir == direction.NorthWest ||
+		dir == direction.SouthEast ||
+		dir == direction.SouthWest
 }
 
-func canMoveDiagonally(t *terrain.Terrain, x, y int, dir terrain.Direction) bool {
+func canMoveDiagonally(t *terrain.Terrain, x, y int, dir direction.Direction) bool {
 	switch dir {
-	case terrain.NorthEast:
-		return t.Traversable(point.New(x, y), terrain.North) &&
-			t.Traversable(point.New(x, y), terrain.East)
-	case terrain.NorthWest:
-		return t.Traversable(point.New(x, y), terrain.North) &&
-			t.Traversable(point.New(x, y), terrain.West)
-	case terrain.SouthEast:
-		return t.Traversable(point.New(x, y), terrain.South) &&
-			t.Traversable(point.New(x, y), terrain.East)
-	case terrain.SouthWest:
-		return t.Traversable(point.New(x, y), terrain.South) &&
-			t.Traversable(point.New(x, y), terrain.West)
+	case direction.NorthEast:
+		return t.Traversable(point.New(x, y), direction.North) &&
+			t.Traversable(point.New(x, y), direction.East)
+	case direction.NorthWest:
+		return t.Traversable(point.New(x, y), direction.North) &&
+			t.Traversable(point.New(x, y), direction.West)
+	case direction.SouthEast:
+		return t.Traversable(point.New(x, y), direction.South) &&
+			t.Traversable(point.New(x, y), direction.East)
+	case direction.SouthWest:
+		return t.Traversable(point.New(x, y), direction.South) &&
+			t.Traversable(point.New(x, y), direction.West)
 	default:
 		return true
 	}
