@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/component/agent"
 	"github.com/dwethmar/apostle/component/factory"
-	"github.com/dwethmar/apostle/component/kind"
 	"github.com/dwethmar/apostle/component/path"
 	"github.com/dwethmar/apostle/entity"
 	"github.com/dwethmar/apostle/point"
@@ -21,27 +21,23 @@ type Behavior struct {
 	logger           *slog.Logger
 	componentFactory *factory.Factory
 	entityStore      *entity.Store
+	componentStore   *component.Store
 	pathfinder       PathFinder // Interface for pathfinding algorithms
 }
 
-func New(logger *slog.Logger, componentFactory *factory.Factory, entityStore *entity.Store, pathfinder PathFinder) *Behavior {
+func New(logger *slog.Logger, componentFactory *factory.Factory, entityStore *entity.Store, componentStore *component.Store, pathfinder PathFinder) *Behavior {
 	return &Behavior{
 		logger:           logger,
 		componentFactory: componentFactory,
 		entityStore:      entityStore,
+		componentStore:   componentStore,
 		pathfinder:       pathfinder,
 	}
 }
 
 func (b *Behavior) Update() error {
-	for _, c := range b.entityStore.Components(agent.Type) {
-		a, ok := c.(*agent.Agent)
-		if !ok {
-			return fmt.Errorf("component %T is not an Agent component", c)
-		}
-
+	for _, a := range b.componentStore.AgentEntries() {
 		b.resetTargetIfRemoved(a)
-
 		switch a.Goal() {
 		case agent.None:
 			if err := b.lookForTargets(a); err != nil {
@@ -58,21 +54,20 @@ func (b *Behavior) Update() error {
 
 // resetTargetIfRemoved checks if the agent's target is removed and clears it if so.
 func (b *Behavior) resetTargetIfRemoved(a *agent.Agent) {
-	if _, ok := a.TargetEntity(); !ok {
-		a.SetTargetEntity(nil)
-		a.SetGoal(agent.None)
+	if !a.HasTargetEntity() {
+		return
+	}
+	if _, ok := b.entityStore.Entity(a.TargetEntityID()); !ok {
+		b.logger.Info("Agent's target entity has been removed, resetting target", "entityID", a.EntityID(), "removedTargetID", a.TargetEntityID())
+		a.Reset()
 	}
 }
 
 func (b *Behavior) lookForTargets(a *agent.Agent) error {
-	if _, ok := a.TargetEntity(); !ok {
-		for _, c := range b.entityStore.Components(kind.Type) {
-			k, ok := c.(*kind.Kind)
-			if !ok || k.Value() != kind.Apple || k.EntityID() == a.TargetEntityID() {
-				continue
-			}
+	if !a.HasTargetEntity() {
+		for _, k := range b.componentStore.KindEntries() {
 			if e, ok := b.entityStore.Entity(k.EntityID()); ok {
-				a.SetTargetEntity(e)
+				a.SetTargetEntity(e.ID())
 				a.SetGoal(agent.MoveAdjecentToTarget)
 				break
 			}
@@ -89,20 +84,16 @@ func (b *Behavior) moveToTarget(a *agent.Agent) error {
 
 	// check if the entity has a path
 	var p *path.Path
-	c, ok := b.entityStore.GetComponent(a.EntityID(), path.Type)
-	if ok {
-		p, ok = c.(*path.Path)
-		if !ok {
-			return fmt.Errorf("component %T is not a Path component", c)
-		}
+	if e.Components().Path() != nil {
+		p = e.Components().Path()
 	} else {
 		p = b.componentFactory.NewPathComponent(a.EntityID())
-		if err := b.entityStore.AddComponent(p); err != nil {
+		if err := e.Components().SetPath(p); err != nil {
 			return fmt.Errorf("failed to add path component to entity %d: %w", a.EntityID(), err)
 		}
 	}
 
-	targetEntity, ok := a.TargetEntity()
+	targetEntity, ok := b.entityStore.Entity(a.TargetEntityID())
 	if !ok {
 		b.logger.Warn("Agent has no target entities", "entityID", a.EntityID())
 		a.Reset()

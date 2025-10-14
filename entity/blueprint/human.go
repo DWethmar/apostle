@@ -11,9 +11,9 @@ func NewHuman(p point.P, s *entity.Store, componentFactory *factory.Factory) *en
 	e := s.CreateEntity(p)
 	k := componentFactory.NewKindComponent(e.ID())
 	k.SetValue(kind.Human)
-	s.AddComponent(k)
-	s.AddComponent(componentFactory.NewMovementComponent(e.ID()))
-	s.AddComponent(componentFactory.NewPathComponent(e.ID()))
-	s.AddComponent(componentFactory.NewAgentComponent(e.ID()))
+	e.Components().SetKind(k)
+	e.Components().SetMovement(componentFactory.NewMovementComponent(e.ID()))
+	e.Components().SetPath(componentFactory.NewPathComponent(e.ID()))
+	e.Components().SetAgent(componentFactory.NewAgentComponent(e.ID()))
 	return e
 }

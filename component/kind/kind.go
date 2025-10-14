@@ -1,7 +1,5 @@
 package kind
 
-import "github.com/dwethmar/apostle/component"
-
 const Type = "Kind"
 
 type Value uint
@@ -13,15 +11,25 @@ const (
 )
 
 type Kind struct {
-	*component.Component
-	value Value
+	entityID      int
+	componentType string
+	value         Value
 }
 
 func NewComponent(entityID int) *Kind {
 	return &Kind{
-		Component: component.NewComponent(entityID, Type),
-		value:     0,
+		entityID:      entityID,
+		componentType: Type,
+		value:         0,
 	}
+}
+
+func (k *Kind) EntityID() int {
+	return k.entityID
+}
+
+func (k *Kind) ComponentType() string {
+	return k.componentType
 }
 
 func (k *Kind) SetValue(value Value) {

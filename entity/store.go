@@ -1,18 +1,19 @@
 package entity
 
 import (
-	"fmt"
-
+	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/point"
 )
 
 type Store struct {
-	entities map[int]*Entity
+	entities       map[int]*Entity
+	componentStore *component.Store
 }
 
-func NewStore() *Store {
+func NewStore(componentCollection *component.Store) *Store {
 	return &Store{
-		entities: make(map[int]*Entity),
+		entities:       make(map[int]*Entity),
+		componentStore: componentCollection,
 	}
 }
 
@@ -27,7 +28,7 @@ func (s *Store) CreateEntity(pos point.P) *Entity {
 	entity := &Entity{
 		id:         id,
 		pos:        pos,
-		components: make(map[string]Component),
+		components: component.NewComponents(s.componentStore),
 	}
 	s.entities[id] = entity
 	return entity
@@ -48,39 +49,4 @@ func (s *Store) Entities() []*Entity {
 		entities = append(entities, entity)
 	}
 	return entities
-}
-
-func (s *Store) AddComponent(c Component) error {
-	if entity, exists := s.entities[c.EntityID()]; exists {
-		entity.components[c.Type()] = c
-		return nil
-	}
-	return fmt.Errorf("entity with ID %d does not exist", c.EntityID())
-}
-
-func (s *Store) GetComponent(entityID int, componentType string) (Component, bool) {
-	if entity, exists := s.entities[entityID]; exists {
-		if comp, exists := entity.components[componentType]; exists {
-			return comp, true
-		}
-	}
-	return nil, false
-}
-
-func (s *Store) RemoveComponent(entityID int, componentType string) error {
-	if entity, exists := s.entities[entityID]; exists {
-		delete(entity.components, componentType)
-		return nil
-	}
-	return fmt.Errorf("entity with ID %d does not exist", entityID)
-}
-
-func (s *Store) Components(componentType string) []Component {
-	var components []Component
-	for _, entity := range s.entities {
-		if comp, exists := entity.components[componentType]; exists {
-			components = append(components, comp)
-		}
-	}
-	return components
 }

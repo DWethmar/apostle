@@ -11,6 +11,6 @@ func NewApple(p point.P, s *entity.Store, componentFactory *factory.Factory) *en
 	e := s.CreateEntity(p)
 	k := componentFactory.NewKindComponent(e.ID())
 	k.SetValue(kind.Apple)
-	s.AddComponent(k)
+	e.Components().SetKind(k)
 	return e
 }

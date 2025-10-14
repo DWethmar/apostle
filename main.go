@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 
 	"github.com/dwethmar/apostle/behavior"
+	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/component/factory"
 	"github.com/dwethmar/apostle/drawer"
 	"github.com/dwethmar/apostle/entity"
@@ -18,6 +19,8 @@ import (
 	"github.com/dwethmar/apostle/terrain"
 	"github.com/hajimehoshi/ebiten/v2"
 )
+
+//go:generate go run ./genout -config=components.yaml
 
 type Drawer interface {
 	Draw(screen *ebiten.Image)
@@ -73,9 +76,10 @@ func main() {
 		}
 	}
 
-	entityStore := entity.NewStore()
+	componentCollection := component.NewStore()
+	entityStore := entity.NewStore(componentCollection)
 	eventBus := event.NewBus(0)
-	componentFactory := factory.NewFactory(eventBus, entityStore)
+	componentFactory := factory.NewFactory(eventBus)
 
 	blueprint.NewHuman(point.New(11, 11), entityStore, componentFactory)
 	{
@@ -92,11 +96,11 @@ func main() {
 
 	game := &Game{
 		drawers: []Drawer{
-			drawer.New(tr, entityStore),
+			drawer.New(tr, entityStore, componentCollection),
 		},
 		systems: []System{
-			locomotion.New(logger, entityStore),
-			behavior.New(logger, componentFactory, entityStore, astar.New(tr)),
+			locomotion.New(logger, entityStore, componentCollection),
+			behavior.New(logger, componentFactory, entityStore, componentCollection, astar.New(tr)),
 		},
 	}
 

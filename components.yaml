@@ -1,0 +1,17 @@
+package: component
+out: component/components.gen.go
+struct: Components
+
+packages:
+  - path: github.com/dwethmar/apostle/component/agent
+    type: Agent
+    name: agent
+  - path: github.com/dwethmar/apostle/component/path
+    type: Path
+    name: path
+  - path: github.com/dwethmar/apostle/component/movement
+    type: Movement
+    name: movement
+  - path: github.com/dwethmar/apostle/component/kind
+    type: Kind
+    name: kind

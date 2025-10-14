@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/point"
 )
 
@@ -12,9 +13,9 @@ type Component interface {
 
 // Entity represents a game entity with a position and a set of components.
 type Entity struct {
+	components *component.Components
 	id         int
 	pos        point.P // Position of the entity
-	components map[string]Component
 }
 
 func (e *Entity) ID() int {
@@ -27,4 +28,8 @@ func (e *Entity) Pos() point.P {
 
 func (e *Entity) SetPos(pos point.P) {
 	e.pos = pos
+}
+
+func (e *Entity) Components() *component.Components {
+	return e.components
 }

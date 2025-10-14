@@ -1,24 +1,30 @@
 package path
 
 import (
-	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/point"
 )
 
 const Type = "Path"
 
 type Path struct {
-	*component.Component
-	cells   []point.P
-	current int // Index of the current cell in the path
+	entityID int
+	cells    []point.P
+	current  int // Index of the current cell in the path
 }
 
 func NewComponent(entityID int) *Path {
 	return &Path{
-		Component: component.NewComponent(entityID, Type),
-		cells:     make([]point.P, 0),
-		current:   0,
+		entityID: entityID,
+		current:  0,
 	}
+}
+
+func (p *Path) EntityID() int {
+	return p.entityID
+}
+
+func (p *Path) ComponentType() string {
+	return Type
 }
 
 func (p *Path) AddCells(cells ...point.P) {

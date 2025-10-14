@@ -3,9 +3,8 @@ package drawer
 import (
 	"image/color"
 
+	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/component/kind"
-	"github.com/dwethmar/apostle/component/movement"
-	"github.com/dwethmar/apostle/component/path"
 	"github.com/dwethmar/apostle/entity"
 	"github.com/dwethmar/apostle/terrain"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -23,14 +22,16 @@ var (
 )
 
 type Drawer struct {
-	terrain     *terrain.Terrain
-	entityStore *entity.Store
+	terrain       *terrain.Terrain
+	entityStore   *entity.Store
+	componenStore *component.Store
 }
 
-func New(t *terrain.Terrain, entityStore *entity.Store) *Drawer {
+func New(t *terrain.Terrain, entityStore *entity.Store, componenStore *component.Store) *Drawer {
 	return &Drawer{
-		terrain:     t,
-		entityStore: entityStore,
+		terrain:       t,
+		entityStore:   entityStore,
+		componenStore: componenStore,
 	}
 }
 
@@ -63,9 +64,8 @@ func (d *Drawer) Draw(screen *ebiten.Image) {
 		x := float32(pos.X) * cellSize
 		y := float32(pos.Y) * cellSize
 
-		if c, ok := d.entityStore.GetComponent(e.ID(), movement.Type); ok {
-			m, ok := c.(*movement.Movement)
-			if ok && !m.AtDestination() {
+		if m := e.Components().Movement(); m != nil {
+			if !m.AtDestination() {
 				progress := float32(m.CurrentStep()) / float32(m.Steps())
 				endX := float32(m.Destination().X) * cellSize
 				endY := float32(m.Destination().Y) * cellSize
@@ -74,11 +74,7 @@ func (d *Drawer) Draw(screen *ebiten.Image) {
 			}
 		}
 
-		if c, ok := d.entityStore.GetComponent(e.ID(), kind.Type); ok {
-			k, ok := c.(*kind.Kind)
-			if !ok {
-				continue
-			}
+		if k := e.Components().Kind(); k != nil {
 			switch k.Value() {
 			case kind.Human:
 				drawEntityDiamond(screen, x, y)
@@ -88,9 +84,7 @@ func (d *Drawer) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	for _, p := range d.entityStore.Components("Path") {
-		if pathComp, ok := p.(*path.Path); ok {
-			drawPath(screen, pathComp.Cells())
-		}
+	for _, p := range d.componenStore.PathEntries() {
+		drawPath(screen, p.Cells())
 	}
 }

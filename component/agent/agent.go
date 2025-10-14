@@ -1,10 +1,5 @@
 package agent
 
-import (
-	"github.com/dwethmar/apostle/component"
-	"github.com/dwethmar/apostle/entity"
-)
-
 const Type = "Agent"
 
 type Goal uint
@@ -21,12 +16,9 @@ const NoTargetID = -1
 // ideas:
 // - have memory: remembered facts about the world
 type Agent struct {
-	*component.Component
-	goal           Goal
-	targetEntityID int // ID of the entity that this agent targets
-	// systems
-	entityStore *entity.Store
-	// event handlers
+	entityID                 int
+	goal                     Goal
+	targetEntityID           int                              // ID of the entity that this agent targets
 	emitTargetEntitySetEvent func(*TargetEntityAcquiredEvent) // Event handler for when a target entity is acquired
 }
 
@@ -38,17 +30,23 @@ func WithEmitTargetEntityAcquiredEvent(handler func(*TargetEntityAcquiredEvent))
 	}
 }
 
-func NewAgent(entityID int, entityStore *entity.Store, opts ...AgentOption) *Agent {
+func NewAgent(entityID int, opts ...AgentOption) *Agent {
 	a := &Agent{
-		Component:      component.NewComponent(entityID, Type),
 		goal:           None,
 		targetEntityID: NoTargetID,
-		entityStore:    entityStore,
 	}
 	for _, opt := range opts {
 		opt(a)
 	}
 	return a
+}
+
+func (a *Agent) EntityID() int {
+	return a.entityID
+}
+
+func (a *Agent) ComponentType() string {
+	return Type
 }
 
 func (a *Agent) SetGoal(goal Goal) {
@@ -60,32 +58,28 @@ func (a *Agent) Goal() Goal {
 }
 
 // SetTargetEntity sets the target entity for the agent.
-func (a *Agent) SetTargetEntity(e *entity.Entity) {
-	if e == nil {
+func (a *Agent) SetTargetEntity(entityID int) {
+	if entityID == NoTargetID {
 		a.targetEntityID = NoTargetID
 	} else {
-		a.targetEntityID = e.ID()
+		a.targetEntityID = entityID
 	}
 	if a.emitTargetEntitySetEvent != nil {
 		a.emitTargetEntitySetEvent(&TargetEntityAcquiredEvent{
-			EntityID:     a.EntityID(),
-			TargetEntity: e,
+			EntityID: a.EntityID(),
 		})
 	}
-}
-
-func (a *Agent) TargetEntity() (*entity.Entity, bool) {
-	if a.targetEntityID == NoTargetID {
-		return nil, false
-	}
-	return a.entityStore.Entity(a.targetEntityID)
 }
 
 func (a *Agent) TargetEntityID() int {
 	return a.targetEntityID
 }
 
+func (a *Agent) HasTargetEntity() bool {
+	return a.targetEntityID != NoTargetID
+}
+
 func (a *Agent) Reset() {
 	a.goal = None
-	a.SetTargetEntity(nil)
+	a.SetTargetEntity(NoTargetID)
 }

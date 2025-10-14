@@ -1,8 +1,11 @@
 module github.com/dwethmar/apostle
 
-go 1.24.5
+go 1.25.3
 
-require github.com/hajimehoshi/ebiten/v2 v2.9.0-alpha.11.0.20250731153303-cd18587fcd84
+require (
+	github.com/hajimehoshi/ebiten/v2 v2.9.0-alpha.11.0.20250731153303-cd18587fcd84
+	gopkg.in/yaml.v3 v3.0.1
+)
 
 require (
 	github.com/ebitengine/gomobile v0.0.0-20250329061421-6d0a8e981e4c // indirect

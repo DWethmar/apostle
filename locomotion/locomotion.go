@@ -5,8 +5,7 @@ import (
 	"log/slog"
 	"math"
 
-	"github.com/dwethmar/apostle/component/movement"
-	"github.com/dwethmar/apostle/component/path"
+	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/entity"
 	"github.com/dwethmar/apostle/point"
 )
@@ -24,35 +23,29 @@ func calculateSteps(start, end point.P, stepsPerUnit int) int {
 
 // Locomotion handles the movement of entities based on their paths and movement components.
 type Locomotion struct {
-	logger      *slog.Logger
-	entityStore *entity.Store
+	logger        *slog.Logger
+	entityStore   *entity.Store
+	componenStore *component.Store
 }
 
-func New(logger *slog.Logger, entityStore *entity.Store) *Locomotion {
+func New(logger *slog.Logger, entityStore *entity.Store, componenStore *component.Store) *Locomotion {
 	return &Locomotion{
-		logger:      logger,
-		entityStore: entityStore,
+		logger:        logger,
+		entityStore:   entityStore,
+		componenStore: componenStore,
 	}
 }
 
 func (l *Locomotion) Update() error {
-	for _, c := range l.entityStore.Components(movement.Type) {
-		e, ok := l.entityStore.Entity(c.EntityID())
+	for _, m := range l.componenStore.MovementEntries() {
+		e, ok := l.entityStore.Entity(m.EntityID())
 		if !ok {
-			return fmt.Errorf("entity with ID %d does not exist", c.EntityID())
+			return fmt.Errorf("entity with ID %d does not exist", m.EntityID())
 		}
-		m, ok := c.(*movement.Movement)
-		if !ok {
-			return fmt.Errorf("component %T is not a Movement component", c)
-		}
-		logger := l.logger.With("component", c.Type(), "entityID", c.EntityID(), "currentStep", m.CurrentStep(), "steps", m.Steps(), "destination", m.Destination())
+		logger := l.logger.With("component", m.ComponentType(), "entityID", m.EntityID(), "currentStep", m.CurrentStep(), "steps", m.Steps(), "destination", m.Destination())
 
 		// check if the entity has a path component
-		if c, ok := l.entityStore.GetComponent(e.ID(), path.Type); ok {
-			p, ok := c.(*path.Path)
-			if !ok {
-				return fmt.Errorf("component %T is not a Path component", c)
-			}
+		if p := e.Components().Path(); p != nil {
 			// If the entity has no destination, set it from the path component if ther path has cells
 			if !m.HasDestination() {
 				if len(p.Cells()) > 0 {
