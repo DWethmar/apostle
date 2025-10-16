@@ -40,6 +40,11 @@ func (s *Store) Entity(id int) (*Entity, bool) {
 }
 
 func (s *Store) RemoveEntity(id int) {
+	e, exists := s.entities[id]
+	if !exists {
+		return
+	}
+	e.Components().RemoveAll()
 	delete(s.entities, id)
 }
 

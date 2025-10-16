@@ -132,6 +132,12 @@ func (o *{{$.Struct}}) Remove{{ Pascal .Name }}() *{{ .Alias }}.{{ .Type }} {
 	return c
 }
 {{ end }}
+
+func (o *{{.Struct}}) RemoveAll() {
+{{- range .Packages }}
+	o.Remove{{ Pascal .Name }}()
+{{- end }}
+}
 `
 
 func main() {

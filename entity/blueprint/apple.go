@@ -7,10 +7,12 @@ import (
 	"github.com/dwethmar/apostle/point"
 )
 
-func NewApple(p point.P, s *entity.Store, componentFactory *factory.Factory) *entity.Entity {
+func NewApple(p point.P, s *entity.Store, componentFactory *factory.Factory) (*entity.Entity, error) {
 	e := s.CreateEntity(p)
 	k := componentFactory.NewKindComponent(e.ID())
 	k.SetValue(kind.Apple)
-	e.Components().SetKind(k)
-	return e
+	if err := e.Components().SetKind(k); err != nil {
+		return nil, err
+	}
+	return e, nil
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-const cellSize = 16 // Size of each cell in pixels
+const CellSize = 16 // Size of each cell in pixels
 
 var (
 	colorSolid  = color.RGBA{0, 128, 0, 255}
@@ -42,33 +42,33 @@ func (d *Drawer) Draw(screen *ebiten.Image) {
 
 		if cell&terrain.Solid != 0 {
 			// Draw solid cells as filled rectangles
-			vector.FillRect(screen, float32(x*cellSize), float32(y*cellSize), cellSize, cellSize, colorSolid, false)
+			vector.FillRect(screen, float32(x*CellSize), float32(y*CellSize), CellSize, CellSize, colorSolid, false)
 		}
 
 		for _, border := range d.terrain.Walls(x, y) {
 			switch border {
 			case terrain.BorderNorth:
-				vector.StrokeLine(screen, float32(x*cellSize), float32(y*cellSize), float32((x+1)*cellSize), float32(y*cellSize), 2, colorBorder, false)
+				vector.StrokeLine(screen, float32(x*CellSize), float32(y*CellSize), float32((x+1)*CellSize), float32(y*CellSize), 2, colorBorder, false)
 			case terrain.BorderSouth:
-				vector.StrokeLine(screen, float32(x*cellSize), float32((y+1)*cellSize), float32((x+1)*cellSize), float32((y+1)*cellSize), 2, colorBorder, false)
+				vector.StrokeLine(screen, float32(x*CellSize), float32((y+1)*CellSize), float32((x+1)*CellSize), float32((y+1)*CellSize), 2, colorBorder, false)
 			case terrain.BorderEast:
-				vector.StrokeLine(screen, float32((x+1)*cellSize), float32(y*cellSize), float32((x+1)*cellSize), float32((y+1)*cellSize), 2, colorBorder, false)
+				vector.StrokeLine(screen, float32((x+1)*CellSize), float32(y*CellSize), float32((x+1)*CellSize), float32((y+1)*CellSize), 2, colorBorder, false)
 			case terrain.BorderWest:
-				vector.StrokeLine(screen, float32(x*cellSize), float32(y*cellSize), float32(x*cellSize), float32((y+1)*cellSize), 2, colorBorder, false)
+				vector.StrokeLine(screen, float32(x*CellSize), float32(y*CellSize), float32(x*CellSize), float32((y+1)*CellSize), 2, colorBorder, false)
 			}
 		}
 	}
 
 	for _, e := range d.entityStore.Entities() {
 		pos := e.Pos()
-		x := float32(pos.X) * cellSize
-		y := float32(pos.Y) * cellSize
+		x := float32(pos.X) * CellSize
+		y := float32(pos.Y) * CellSize
 
 		if m := e.Components().Movement(); m != nil {
 			if !m.AtDestination() {
 				progress := float32(m.CurrentStep()) / float32(m.Steps())
-				endX := float32(m.Destination().X) * cellSize
-				endY := float32(m.Destination().Y) * cellSize
+				endX := float32(m.Destination().X) * CellSize
+				endY := float32(m.Destination().Y) * CellSize
 				x += (endX - x) * progress
 				y += (endY - y) * progress
 			}

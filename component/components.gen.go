@@ -234,3 +234,10 @@ func (o *Components) RemovePath() *path.Path {
 	o.path = nil
 	return c
 }
+
+func (o *Components) RemoveAll() {
+	o.RemoveAgent()
+	o.RemoveKind()
+	o.RemoveMovement()
+	o.RemovePath()
+}

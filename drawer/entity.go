@@ -7,26 +7,26 @@ import (
 )
 
 func centerCellX(x int) float32 {
-	return float32(x)*cellSize + cellSize/2
+	return float32(x)*CellSize + CellSize/2
 }
 
 func centerCellY(y int) float32 {
-	return float32(y)*cellSize + cellSize/2
+	return float32(y)*CellSize + CellSize/2
 }
 
 func drawEntityDiamond(screen *ebiten.Image, x, y float32) {
-	width := float32(cellSize) * 0.57 // slimmer than full cell width
-	height := float32(cellSize) * 0.9 // taller diamond but bottom tip at cell base
+	width := float32(CellSize) * 0.57 // slimmer than full cell width
+	height := float32(CellSize) * 0.9 // taller diamond but bottom tip at cell base
 
 	var path vector.Path
 	// Bottom tip at the real entity position
-	path.MoveTo(x+cellSize/2, y+cellSize)
+	path.MoveTo(x+CellSize/2, y+CellSize)
 	// Right tip
-	path.LineTo(x+cellSize/2+width/2, y+cellSize-height/2)
+	path.LineTo(x+CellSize/2+width/2, y+CellSize-height/2)
 	// Top tip
-	path.LineTo(x+cellSize/2, y+cellSize-height)
+	path.LineTo(x+CellSize/2, y+CellSize-height)
 	// Left tip
-	path.LineTo(x+cellSize/2-width/2, y+cellSize-height/2)
+	path.LineTo(x+CellSize/2-width/2, y+CellSize-height/2)
 	path.Close()
 
 	vector.FillPath(screen, &path, colorEntity, true, vector.FillRuleEvenOdd)
@@ -43,7 +43,7 @@ func drawPath(screen *ebiten.Image, points []point.P) {
 }
 
 func drawApple(screen *ebiten.Image, x, y float32) {
-	x += cellSize / 2
-	y += cellSize / 2
-	vector.FillCircle(screen, x, y, float32(cellSize)*0.4, colorApple, true)
+	x += CellSize / 2
+	y += CellSize / 2
+	vector.FillCircle(screen, x, y, float32(CellSize)*0.4, colorApple, true)
 }

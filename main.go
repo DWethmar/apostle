@@ -63,6 +63,10 @@ func main() {
 	for s := range tr.Walk() {
 		if s.X%2 == 0 && s.Y%2 == 0 {
 			// Fill every second cell with solid terrain
+			// except the starting area around (10,10)
+			if (s.X >= 8 && s.X <= 12) && (s.Y >= 8 && s.Y <= 12) {
+				continue
+			}
 			if err := tr.Fill(s.X, s.Y, terrain.Solid); err != nil {
 				logger.Error("failed to fill cell", "x", s.X, "y", s.Y, "error", err)
 			}
