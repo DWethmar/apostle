@@ -149,8 +149,8 @@ func (b *Behavior) moveToTarget(a *agent.Agent) error {
 		return nil // No targets to move towards
 	}
 
-	dest, _ := p.Destination()
-	if !dest.Neighboring(targetEntity.Pos()) {
+	dest, hasDest := p.Destination()
+	if !hasDest || !dest.Neighboring(targetEntity.Pos()) {
 		b.logger.Debug("Agent's target has moved, recalculating path", "entityID", a.EntityID(), "oldTargetPos", dest, "newTargetPos", targetEntity.Pos())
 		p.Clear()
 		// Also clear the movement destination to stop the entity from continuing on the old path

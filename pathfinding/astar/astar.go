@@ -20,8 +20,16 @@ type node struct {
 
 type priorityQueue []*node
 
-func (pq priorityQueue) Len() int           { return len(pq) }
-func (pq priorityQueue) Less(i, j int) bool { return pq[i].fCost < pq[j].fCost }
+func (pq priorityQueue) Len() int { return len(pq) }
+
+// Less prioritizes lower fCost, and uses hCost as a tiebreaker
+func (pq priorityQueue) Less(i, j int) bool {
+	if pq[i].fCost == pq[j].fCost {
+		return pq[i].hCost < pq[j].hCost
+	}
+	return pq[i].fCost < pq[j].fCost
+}
+
 func (pq priorityQueue) Swap(i, j int) {
 	pq[i], pq[j] = pq[j], pq[i]
 	pq[i].index = i
@@ -42,9 +50,11 @@ func (pq *priorityQueue) Pop() any {
 }
 
 func heuristic(x1, y1, x2, y2 int) float64 {
-	dx := float64(x1 - x2)
-	dy := float64(y1 - y2)
-	return math.Sqrt(dx*dx + dy*dy)
+	dx := math.Abs(float64(x1 - x2))
+	dy := math.Abs(float64(y1 - y2))
+	const D = 1.0         // cost for orthogonal
+	const D2 = math.Sqrt2 // cost for diagonal
+	return D*(dx+dy) + (D2-2*D)*math.Min(dx, dy)
 }
 
 // AStar implements the PathFinder interface using A* search.
@@ -141,20 +151,46 @@ func isDiagonal(dir direction.Direction) bool {
 }
 
 func canMoveDiagonally(t *terrain.Terrain, x, y int, dir direction.Direction) bool {
-	switch dir {
-	case direction.NorthEast:
-		return t.Traversable(point.New(x, y), direction.North) &&
-			t.Traversable(point.New(x, y), direction.East)
-	case direction.NorthWest:
-		return t.Traversable(point.New(x, y), direction.North) &&
-			t.Traversable(point.New(x, y), direction.West)
-	case direction.SouthEast:
-		return t.Traversable(point.New(x, y), direction.South) &&
-			t.Traversable(point.New(x, y), direction.East)
-	case direction.SouthWest:
-		return t.Traversable(point.New(x, y), direction.South) &&
-			t.Traversable(point.New(x, y), direction.West)
-	default:
-		return true
+	// Map of directions to deltas (reuse your moves() table)
+	mv := moves()
+
+	// Identify the two orthogonal directions that compose the diagonal.
+	orth1, orth2 := func(d direction.Direction) (direction.Direction, direction.Direction) {
+		switch d {
+		case direction.NorthEast:
+			return direction.North, direction.East
+		case direction.NorthWest:
+			return direction.North, direction.West
+		case direction.SouthEast:
+			return direction.South, direction.East
+		case direction.SouthWest:
+			return direction.South, direction.West
+		default:
+			return direction.None, direction.None // if you have a None; otherwise handle as needed
+		}
+	}(dir)
+
+	p := point.New(x, y)
+
+	// 1) From the current cell, both orthogonal exits must be OK
+	if !t.Traversable(p, orth1) || !t.Traversable(p, orth2) {
+		return false
 	}
+
+	// 2) From each orthogonal mid cell, the second leg must also be OK
+	m1 := point.New(x+mv[orth1].Dx, y+mv[orth1].Dy) // after taking orth1
+	m2 := point.New(x+mv[orth2].Dx, y+mv[orth2].Dy) // after taking orth2
+
+	// Bounds checks (optional if Traversable already does it)
+	if !t.InBounds(m1.X, m1.Y) || !t.InBounds(m2.X, m2.Y) {
+		return false
+	}
+
+	// From mid cell reached via orth1, must be able to go orth2.
+	// From mid cell reached via orth2, must be able to go orth1.
+	if !t.Traversable(m1, orth2) || !t.Traversable(m2, orth1) {
+		return false
+	}
+
+	return true
 }

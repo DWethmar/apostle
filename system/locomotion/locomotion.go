@@ -44,25 +44,20 @@ func (l *Locomotion) Update() error {
 		}
 		logger := l.logger.With("component", m.ComponentType(), "entityID", m.EntityID(), "currentStep", m.CurrentStep(), "steps", m.Steps(), "destination", m.Destination())
 
+		if !m.HasDestination() {
+			m.SetDestination(e.Pos(), 0) // Set current position as destination with 0 steps
+		}
+
 		// check if the entity has a path component
 		if p := e.Components().Path(); p != nil {
-			// If the entity has no destination, set it from the path component if ther path has cells
-			if !m.HasDestination() {
-				if len(p.Cells()) > 0 {
-					steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
-					logger.Debug("entity has no path destination, setting new destination", "currentPos", e.Pos, "destination", p.CurrentCell(), "steps", steps)
-					m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
-				} else {
-					m.SetDestination(e.Pos(), 0)
-				}
-				// Don't set destination to current position if no path cells - just leave it without destination
-			} else {
-				// If the entity is at its destination and the path has more cells, move to the next cell
-				if m.AtDestination() && p.Next() {
-					steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
-					logger.Debug("entity is moving to next path cell", "entityID", e.ID, "nextCell", p.CurrentCell(), "steps", steps)
-					m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
-				}
+			if _, hasDest := p.Destination(); !hasDest {
+				break
+			}
+
+			// If the entity is at its destination and the path has more cells, move to the next cell
+			if m.AtDestination() && p.Next() {
+				steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
+				m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
 			}
 		}
 

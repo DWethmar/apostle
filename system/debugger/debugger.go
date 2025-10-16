@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/dwethmar/apostle/component"
+	"github.com/dwethmar/apostle/component/agent"
 	"github.com/dwethmar/apostle/component/kind"
 	"github.com/dwethmar/apostle/component/movement"
 	"github.com/dwethmar/apostle/component/path"
@@ -57,6 +58,11 @@ func (d *Debugger) Update() error {
 						})
 						ctx.Text(fmt.Sprintf("Pos: %d, %d", entity.Pos().X, entity.Pos().Y))
 						// components
+						if agemt := entity.Components().Agent(); agemt != nil {
+							ctx.TreeNode(agemt.ComponentType(), func() {
+								d.DebugAgentComponent(ctx, agemt)
+							})
+						}
 						if kind := entity.Components().Kind(); kind != nil {
 							ctx.TreeNode(kind.ComponentType(), func() {
 								d.DebugKindComponent(ctx, kind)
@@ -83,6 +89,21 @@ func (d *Debugger) Update() error {
 	return nil
 }
 
+func (d *Debugger) DebugAgentComponent(ctx *debugui.Context, a *agent.Agent) {
+	ctx.Text(fmt.Sprintf("goal: %s", a.Goal()))
+	if a.HasTargetEntity() {
+		ctx.Text(fmt.Sprintf("target entity ID: %d", a.TargetEntityID()))
+	} else {
+		ctx.Text("no target entity")
+	}
+	ctx.Button("reset").On(func() {
+		a.Reset()
+	})
+	ctx.Button("clear target").On(func() {
+		a.SetTargetEntity(agent.NoTargetID)
+	})
+}
+
 func (d *Debugger) DebugKindComponent(ctx *debugui.Context, k *kind.Kind) {
 	ctx.Text(fmt.Sprintf("value: %s", k.Value()))
 }
@@ -101,6 +122,7 @@ func (d *Debugger) DebugPathComponent(ctx *debugui.Context, p *path.Path) {
 
 func (d *Debugger) DebugMovementComponent(ctx *debugui.Context, m *movement.Movement) {
 	ctx.Text(fmt.Sprintf("has destination: %t", m.HasDestination()))
+	ctx.Text(fmt.Sprintf("origin: %d, %d", m.Origin().X, m.Origin().Y))
 	ctx.Text(fmt.Sprintf("destination: %d, %d", m.Destination().X, m.Destination().Y))
 	ctx.Text(fmt.Sprintf("at destination: %t", m.AtDestination()))
 	ctx.Text(fmt.Sprintf("steps: %d/%d", m.CurrentStep(), m.Steps()))

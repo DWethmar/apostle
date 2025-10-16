@@ -6,7 +6,8 @@ type (
 
 // Direction flags for movement
 const (
-	North Direction = 1 << iota
+	None Direction = 1 << iota
+	North
 	South
 	East
 	West

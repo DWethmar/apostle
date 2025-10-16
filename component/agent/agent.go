@@ -2,6 +2,7 @@ package agent
 
 const Type = "Agent"
 
+//go:generate go tool stringer -type=Goal
 type Goal uint
 
 const (
