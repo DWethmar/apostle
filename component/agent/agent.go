@@ -6,7 +6,7 @@ type Goal uint
 
 const (
 	None Goal = iota
-	MoveAdjecentToTarget
+	MoveAdjacentToTarget
 )
 
 const NoTargetID = -1

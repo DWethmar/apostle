@@ -1,9 +1,6 @@
 package movement
 
 import (
-	"bytes"
-	"encoding/gob"
-
 	"github.com/dwethmar/apostle/point"
 )
 
@@ -42,35 +39,22 @@ func (m *Movement) SetDestination(dest point.P, steps int) {
 	m.hasDestination = true
 }
 
+func (m *Movement) ClearDestination() {
+	m.hasDestination = false
+	m.currentStep = 0
+	m.steps = 0
+}
+
 func (m *Movement) AtDestination() bool {
-	return m.currentStep >= m.steps
+	return m.HasDestination() && m.currentStep >= m.steps
 }
 
 func (m *Movement) AdvanceStep() {
 	if m.AtDestination() {
-		return // Already at destination
+		return
 	}
 	m.currentStep++
 	if m.currentStep > m.steps {
 		m.currentStep = m.steps // Ensure we don't exceed steps
 	}
-}
-
-// For later use with gob encoding/decoding
-func (m *Movement) GobEncode() ([]byte, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	enc.Encode(m.Destination())
-	enc.Encode(m.Steps())
-	enc.Encode(m.CurrentStep())
-	return buf.Bytes(), nil
-}
-
-func (m *Movement) GobDecode(data []byte) error {
-	buf := bytes.NewBuffer(data)
-	dec := gob.NewDecoder(buf)
-	dec.Decode(&m.dest)
-	dec.Decode(&m.steps)
-	dec.Decode(&m.currentStep)
-	return nil
 }

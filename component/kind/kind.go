@@ -4,6 +4,7 @@ const Type = "Kind"
 
 type Value uint
 
+//go:generate go tool stringer -type=Value
 const (
 	None Value = iota
 	Human

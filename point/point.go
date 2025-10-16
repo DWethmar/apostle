@@ -14,7 +14,9 @@ func (p P) Equal(other P) bool {
 	return p.X == other.X && p.Y == other.Y
 }
 
+// Neighboring checks if two points are adjacent (horizontally, vertically and diagonally).
 func (p P) Neighboring(other P) bool {
-	return (p.X == other.X && (p.Y == other.Y-1 || p.Y == other.Y+1)) ||
-		(p.Y == other.Y && (p.X == other.X-1 || p.X == other.X+1))
+	dx := p.X - other.X
+	dy := p.Y - other.Y
+	return (dx == 0 && (dy == 1 || dy == -1)) || (dy == 0 && (dx == 1 || dx == -1)) || (dx == 1 && (dy == 1 || dy == -1)) || (dx == -1 && (dy == 1 || dy == -1))
 }

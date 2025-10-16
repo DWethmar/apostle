@@ -3,13 +3,12 @@ package component
 
 import (
 	"fmt"
-	"slices"
-	"sync"
-
 	agent "github.com/dwethmar/apostle/component/agent"
 	kind "github.com/dwethmar/apostle/component/kind"
 	movement "github.com/dwethmar/apostle/component/movement"
 	path "github.com/dwethmar/apostle/component/path"
+	"slices"
+	"sync"
 )
 
 type Store struct {
@@ -233,4 +232,11 @@ func (o *Components) RemovePath() *path.Path {
 	}
 	o.path = nil
 	return c
+}
+
+func (o *Components) RemoveAll() {
+	o.RemoveAgent()
+	o.RemoveKind()
+	o.RemoveMovement()
+	o.RemovePath()
 }

@@ -23,21 +23,21 @@ func calculateSteps(start, end point.P, stepsPerUnit int) int {
 
 // Locomotion handles the movement of entities based on their paths and movement components.
 type Locomotion struct {
-	logger        *slog.Logger
-	entityStore   *entity.Store
-	componenStore *component.Store
+	logger         *slog.Logger
+	entityStore    *entity.Store
+	componentStore *component.Store
 }
 
 func New(logger *slog.Logger, entityStore *entity.Store, componenStore *component.Store) *Locomotion {
 	return &Locomotion{
-		logger:        logger,
-		entityStore:   entityStore,
-		componenStore: componenStore,
+		logger:         logger.With(slog.String("system", "locomotion")),
+		entityStore:    entityStore,
+		componentStore: componenStore,
 	}
 }
 
 func (l *Locomotion) Update() error {
-	for _, m := range l.componenStore.MovementEntries() {
+	for _, m := range l.componentStore.MovementEntries() {
 		e, ok := l.entityStore.Entity(m.EntityID())
 		if !ok {
 			return fmt.Errorf("entity with ID %d does not exist", m.EntityID())
@@ -53,8 +53,9 @@ func (l *Locomotion) Update() error {
 					logger.Debug("entity has no path destination, setting new destination", "currentPos", e.Pos, "destination", p.CurrentCell(), "steps", steps)
 					m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
 				} else {
-					m.SetDestination(e.Pos(), 0) // No path cells, stay at current position
+					m.SetDestination(e.Pos(), 0)
 				}
+				// Don't set destination to current position if no path cells - just leave it without destination
 			} else {
 				// If the entity is at its destination and the path has more cells, move to the next cell
 				if m.AtDestination() && p.Next() {

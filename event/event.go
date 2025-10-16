@@ -75,7 +75,6 @@ func (b *Bus) Publish(event Event) error {
 	handlers := make([]Subscription, len(b.handlers))
 	copy(handlers, b.handlers)
 	b.mu.RUnlock()
-
 	for _, entry := range handlers {
 		if !entry.matcher.Match(event) {
 			continue
@@ -84,6 +83,5 @@ func (b *Bus) Publish(event Event) error {
 			return err
 		}
 	}
-
 	return nil
 }
