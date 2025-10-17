@@ -8,6 +8,7 @@ import (
 	"github.com/dwethmar/apostle/component"
 	"github.com/dwethmar/apostle/entity"
 	"github.com/dwethmar/apostle/point"
+	"github.com/dwethmar/apostle/system/world"
 )
 
 const defaultStepSize = 20 // Default step size for movement
@@ -42,10 +43,9 @@ func (l *Locomotion) Update() error {
 		if !ok {
 			return fmt.Errorf("entity with ID %d does not exist", m.EntityID())
 		}
-		logger := l.logger.With("component", m.ComponentType(), "entityID", m.EntityID(), "currentStep", m.CurrentStep(), "steps", m.Steps(), "destination", m.Destination())
 
 		if !m.HasDestination() {
-			m.SetDestination(e.Pos(), 0) // Set current position as destination with 0 steps
+			m.SetDestinationCell(e.Pos().Divide(world.CellSize), 0) // Set current position as destination with 0 steps
 		}
 
 		// check if the entity has a path component
@@ -56,18 +56,21 @@ func (l *Locomotion) Update() error {
 
 			// If the entity is at its destination and the path has more cells, move to the next cell
 			if m.AtDestination() && p.Next() {
-				steps := calculateSteps(e.Pos(), p.CurrentCell(), defaultStepSize)
-				m.SetDestination(p.CurrentCell(), steps) // Set new destination with calculated steps
+				steps := calculateSteps(m.OriginCell(), m.DestinationCell(), defaultStepSize)
+				m.SetDestinationCell(p.CurrentCell(), steps) // Set new destination with calculated steps
 			}
 		}
 
 		if !m.AtDestination() {
 			m.AdvanceStep()
-		}
-
-		if m.AtDestination() && !e.Pos().Equal(m.Destination()) { // Reached destination and we didn't update the entity position yet
-			logger.Debug("entity reached destination")
-			e.SetPos(m.Destination())
+			cellSize := float32(world.CellSize)
+			progress := float32(m.CurrentStep()) / float32(m.Steps())
+			newX := float32(m.OriginCell().X)*(1-progress) + float32(m.DestinationCell().X)*progress
+			newY := float32(m.OriginCell().Y)*(1-progress) + float32(m.DestinationCell().Y)*progress
+			e.SetPos(point.P{
+				X: int(newX*cellSize) + world.CellSize/2,
+				Y: int(newY*cellSize) + world.CellSize/2,
+			})
 		}
 	}
 	return nil

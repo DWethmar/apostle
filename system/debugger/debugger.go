@@ -122,8 +122,8 @@ func (d *Debugger) DebugPathComponent(ctx *debugui.Context, p *path.Path) {
 
 func (d *Debugger) DebugMovementComponent(ctx *debugui.Context, m *movement.Movement) {
 	ctx.Text(fmt.Sprintf("has destination: %t", m.HasDestination()))
-	ctx.Text(fmt.Sprintf("origin: %d, %d", m.Origin().X, m.Origin().Y))
-	ctx.Text(fmt.Sprintf("destination: %d, %d", m.Destination().X, m.Destination().Y))
+	ctx.Text(fmt.Sprintf("origin cell: %d, %d", m.OriginCell().X, m.OriginCell().Y))
+	ctx.Text(fmt.Sprintf("destination cell: %d, %d", m.DestinationCell().X, m.DestinationCell().Y))
 	ctx.Text(fmt.Sprintf("at destination: %t", m.AtDestination()))
 	ctx.Text(fmt.Sprintf("steps: %d/%d", m.CurrentStep(), m.Steps()))
 }

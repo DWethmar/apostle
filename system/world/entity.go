@@ -14,27 +14,30 @@ func centerCellY(y int) float32 {
 	return float32(y)*CellSize + CellSize/2
 }
 
+// drawEntityDiamond draws an entity as a diamond shape centered in its cell
+// x and y are the center coordinates of the cell in pixels
 func drawEntityDiamond(screen *ebiten.Image, x, y float32) {
 	width := float32(CellSize) * 0.57 // slimmer than full cell width
-	height := float32(CellSize) * 0.9 // taller diamond but bottom tip at cell base
+	height := float32(CellSize) * 0.9 // diamond height
 
 	var path vector.Path
-	// Bottom tip at the real entity position
-	path.MoveTo(x+CellSize/2, y+CellSize)
+	// Diamond centered on (x, y)
+	// Bottom tip
+	path.MoveTo(x, y+height/2)
 	// Right tip
-	path.LineTo(x+CellSize/2+width/2, y+CellSize-height/2)
+	path.LineTo(x+width/2, y)
 	// Top tip
-	path.LineTo(x+CellSize/2, y+CellSize-height)
+	path.LineTo(x, y-height/2)
 	// Left tip
-	path.LineTo(x+CellSize/2-width/2, y+CellSize-height/2)
+	path.LineTo(x-width/2, y)
 	path.Close()
 
 	dopt := &vector.DrawPathOptions{}
-	dopt.AntiAlias = true
+	dopt.AntiAlias = false
 	dopt.ColorScale.ScaleWithColor(colorEntity)
 
 	vector.FillPath(screen, &path, &vector.FillOptions{
-		FillRule: vector.FillRuleEvenOdd,
+		FillRule: vector.FillRuleNonZero,
 	}, dopt)
 }
 
@@ -46,7 +49,5 @@ func drawPath(screen *ebiten.Image, points []point.P) {
 }
 
 func drawApple(screen *ebiten.Image, x, y float32) {
-	x += CellSize / 2
-	y += CellSize / 2
 	vector.FillCircle(screen, x, y, float32(CellSize)*0.4, colorApple, true)
 }

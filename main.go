@@ -127,7 +127,10 @@ func main() {
 				break
 			}
 		}
-		blueprint.NewApple(point.New(x, y), entityStore, componentFactory)
+		blueprint.NewApple(world.CellToCenterPX(point.P{
+			X: x,
+			Y: y,
+		}), entityStore, componentFactory)
 	}
 
 	debugger := debugger.New(logger, entityStore, componentCollection)

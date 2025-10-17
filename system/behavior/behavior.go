@@ -61,10 +61,11 @@ func (b *Behavior) Update() error {
 	var newTargetEntity *entity.Entity
 	if b.click != nil {
 		defer func() { b.click = nil }()
-		p := point.P{
+		p := world.CellToCenterPX(point.P{
 			X: b.click.X / world.CellSize,
 			Y: b.click.Y / world.CellSize,
-		}
+		})
+
 		e, err := blueprint.NewApple(p, b.entityStore, b.componentFactory)
 		if err != nil {
 			return fmt.Errorf("failed to create apple entity at %v: %w", p, err)
@@ -148,21 +149,22 @@ func (b *Behavior) moveToTarget(a *agent.Agent) error {
 		a.Reset()
 		return nil // No targets to move towards
 	}
+	targetEntityCell := world.PXToCell(targetEntity.Pos())
 
 	dest, hasDest := p.Destination()
-	if !hasDest || !dest.Neighboring(targetEntity.Pos()) {
-		b.logger.Debug("Agent's target has moved, recalculating path", "entityID", a.EntityID(), "oldTargetPos", dest, "newTargetPos", targetEntity.Pos())
+	if !hasDest || !dest.Neighboring(targetEntityCell) {
+		b.logger.Debug("Agent's target has moved, recalculating path", slog.Int("entityID", a.EntityID()), slog.Any("oldTargetPos", dest), slog.Any("newTargetPos", targetEntity.Pos()))
 		p.Clear()
 		// Also clear the movement destination to stop the entity from continuing on the old path
 		m := e.Components().Movement()
 		// Immediately recalculate the path from current position
-		steps := b.pathfinder.Find(m.Destination(), targetEntity.Pos())
+		steps := b.pathfinder.Find(m.DestinationCell(), targetEntityCell)
 		if len(steps) == 0 {
-			b.logger.Warn("No path found to target after recalculation", "targetID", targetEntity.ID(), "entityID", a.EntityID())
+			b.logger.Warn("No path found to target after recalculation", slog.Int("targetID", targetEntity.ID()), slog.Int("entityID", a.EntityID()))
 			a.Reset()
 			return nil // No path found, reset the agent
 		}
-		b.logger.Debug("Agent recalculated path to target", "targetID", targetEntity.ID(), "steps", steps)
+		b.logger.Debug("Agent recalculated path to target", slog.Int("targetID", targetEntity.ID()))
 		// Set the path component with the calculated steps
 		p.Reset()
 		p.AddCells(steps[:len(steps)-1]...)

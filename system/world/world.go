@@ -9,6 +9,7 @@ import (
 	"github.com/dwethmar/apostle/entity"
 	"github.com/dwethmar/apostle/event"
 	"github.com/dwethmar/apostle/input"
+	"github.com/dwethmar/apostle/point"
 	"github.com/dwethmar/apostle/propagation"
 	"github.com/dwethmar/apostle/terrain"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -16,6 +17,20 @@ import (
 )
 
 const CellSize = 16 // Size of each cell in pixels
+
+func CellToCenterPX(pos point.P) point.P {
+	return point.P{
+		X: pos.X*CellSize + CellSize/2,
+		Y: pos.Y*CellSize + CellSize/2,
+	}
+}
+
+func PXToCell(pos point.P) point.P {
+	return point.P{
+		X: pos.X / CellSize,
+		Y: pos.Y / CellSize,
+	}
+}
 
 var (
 	colorSolid  = color.RGBA{0, 128, 0, 255}
@@ -26,20 +41,20 @@ var (
 )
 
 type World struct {
-	logger        *slog.Logger
-	terrain       *terrain.Terrain
-	entityStore   *entity.Store
-	componenStore *component.Store
-	eventBus      *event.Bus
+	logger         *slog.Logger
+	terrain        *terrain.Terrain
+	entityStore    *entity.Store
+	componentStore *component.Store
+	eventBus       *event.Bus
 }
 
-func New(logger *slog.Logger, t *terrain.Terrain, entityStore *entity.Store, componenStore *component.Store, eventBus *event.Bus) *World {
+func New(logger *slog.Logger, t *terrain.Terrain, entityStore *entity.Store, componentStore *component.Store, eventBus *event.Bus) *World {
 	return &World{
-		logger:        logger.With(slog.String("system", "world")),
-		terrain:       t,
-		entityStore:   entityStore,
-		componenStore: componenStore,
-		eventBus:      eventBus,
+		logger:         logger.With(slog.String("system", "world")),
+		terrain:        t,
+		entityStore:    entityStore,
+		componentStore: componentStore,
+		eventBus:       eventBus,
 	}
 }
 
@@ -78,19 +93,8 @@ func (d *World) Draw(screen *ebiten.Image) {
 
 	for _, e := range d.entityStore.Entities() {
 		pos := e.Pos()
-		x := float32(pos.X) * CellSize
-		y := float32(pos.Y) * CellSize
-
-		if m := e.Components().Movement(); m != nil {
-			if !m.AtDestination() {
-				progress := float32(m.CurrentStep()) / float32(m.Steps())
-				endX := float32(m.Destination().X) * CellSize
-				endY := float32(m.Destination().Y) * CellSize
-				x += (endX - x) * progress
-				y += (endY - y) * progress
-			}
-		}
-
+		x := float32(pos.X)
+		y := float32(pos.Y)
 		if k := e.Components().Kind(); k != nil {
 			switch k.Value() {
 			case kind.Human:
@@ -101,7 +105,7 @@ func (d *World) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	for _, p := range d.componenStore.PathEntries() {
+	for _, p := range d.componentStore.PathEntries() {
 		drawPath(screen, p.Cells())
 	}
 }

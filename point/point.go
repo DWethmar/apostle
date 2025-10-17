@@ -20,3 +20,7 @@ func (p P) Neighboring(other P) bool {
 	dy := p.Y - other.Y
 	return (dx == 0 && (dy == 1 || dy == -1)) || (dy == 0 && (dx == 1 || dx == -1)) || (dx == 1 && (dy == 1 || dy == -1)) || (dx == -1 && (dy == 1 || dy == -1))
 }
+
+func (p P) Divide(scalar int) P {
+	return P{X: p.X / scalar, Y: p.Y / scalar}
+}
