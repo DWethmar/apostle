@@ -29,13 +29,16 @@ func drawEntityDiamond(screen *ebiten.Image, x, y float32) {
 	path.LineTo(x+CellSize/2-width/2, y+CellSize-height/2)
 	path.Close()
 
-	vector.FillPath(screen, &path, colorEntity, true, vector.FillRuleEvenOdd)
+	dopt := &vector.DrawPathOptions{}
+	dopt.AntiAlias = true
+	dopt.ColorScale.ScaleWithColor(colorEntity)
+
+	vector.FillPath(screen, &path, &vector.FillOptions{
+		FillRule: vector.FillRuleEvenOdd,
+	}, dopt)
 }
 
 func drawPath(screen *ebiten.Image, points []point.P) {
-	// vector.StrokeLine(screen, centerCellX(points[0].X), centerCellY(points[0].Y),
-	// 	centerCellX(points[len(points)-1].X), centerCellY(points[len(points)-1].Y), 2, colorPath, false)
-
 	for i := 0; i < len(points)-1; i++ {
 		vector.StrokeLine(screen, centerCellX(points[i].X), centerCellY(points[i].Y),
 			centerCellX(points[i+1].X), centerCellY(points[i+1].Y), 2, colorPath, false)
