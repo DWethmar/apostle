@@ -13,8 +13,8 @@ type (
 )
 
 const (
-	width  = 20
-	height = 20
+	width  = 50
+	height = 50
 )
 
 // Solidity, border and other flags for terrain cells

@@ -15,12 +15,18 @@ import (
 	"github.com/dwethmar/apostle/propagation"
 	"github.com/ebitengine/debugui"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+)
+
+const (
+	width  = 500
+	height = 700
 )
 
 type Debugger struct {
 	logger         *slog.Logger
+	enabled        bool
 	debugui        debugui.DebugUI
-	count          int
 	entityStore    *entity.Store
 	componentStore *component.Store
 	windowBounds   image.Rectangle
@@ -36,6 +42,15 @@ func New(logger *slog.Logger, entityStore *entity.Store, componentStore *compone
 }
 
 func (d *Debugger) Update() error {
+	// check if F5 is pressed to toggle debugger
+	if inpututil.IsKeyJustPressed(ebiten.KeyF5) {
+		d.enabled = !d.enabled
+	}
+
+	if !d.enabled {
+		return nil
+	}
+
 	entities := d.entityStore.Entities()
 	slices.SortFunc(entities, func(a, b *entity.Entity) int {
 		if a.ID() < b.ID() {
@@ -46,8 +61,14 @@ func (d *Debugger) Update() error {
 		}
 		return 0
 	})
+
+	// center window
+	windowWidth, _ := ebiten.WindowSize()
+	x := (windowWidth - width) / 2
+	y := 0
+
 	if _, err := d.debugui.Update(func(ctx *debugui.Context) error {
-		ctx.Window("Test", image.Rect(50, 50, 500, 700), func(layout debugui.ContainerLayout) {
+		ctx.Window("Test", image.Rect(x, y, x+width, y+height), func(layout debugui.ContainerLayout) {
 			d.windowBounds = layout.Bounds
 			ctx.TreeNode("entities", func() {
 				ctx.Loop(len(entities), func(i int) {
@@ -129,10 +150,16 @@ func (d *Debugger) DebugMovementComponent(ctx *debugui.Context, m *movement.Move
 }
 
 func (d *Debugger) Draw(screen *ebiten.Image) {
+	if !d.enabled {
+		return
+	}
 	d.debugui.Draw(screen)
 }
 
 func (d *Debugger) OnPointerPressed(x, y int) propagation.Event {
+	if !d.enabled {
+		return propagation.Propagate
+	}
 	if d.windowBounds.Overlaps(image.Rect(x, y, x+1, y+1)) {
 		d.pointerPressed = true
 		return propagation.Stop

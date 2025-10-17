@@ -14,6 +14,7 @@ import (
 	"github.com/dwethmar/apostle/input"
 	"github.com/dwethmar/apostle/point"
 	"github.com/dwethmar/apostle/system/world"
+	"github.com/dwethmar/apostle/terrain"
 )
 
 // PathFinder defines the behavior for pathfinding algorithms.
@@ -23,6 +24,7 @@ type PathFinder interface {
 
 type Behavior struct {
 	logger           *slog.Logger
+	tr               *terrain.Terrain
 	componentFactory *factory.Factory
 	entityStore      *entity.Store
 	componentStore   *component.Store
@@ -34,9 +36,10 @@ type Behavior struct {
 	click         *point.P
 }
 
-func New(logger *slog.Logger, componentFactory *factory.Factory, entityStore *entity.Store, componentStore *component.Store, pathfinder PathFinder, eventBus *event.Bus) *Behavior {
+func New(logger *slog.Logger, tr *terrain.Terrain, componentFactory *factory.Factory, entityStore *entity.Store, componentStore *component.Store, pathfinder PathFinder, eventBus *event.Bus) *Behavior {
 	b := &Behavior{
 		logger:           logger.With(slog.String("system", "behavior")),
+		tr:               tr,
 		componentFactory: componentFactory,
 		entityStore:      entityStore,
 		componentStore:   componentStore,
@@ -61,11 +64,16 @@ func (b *Behavior) Update() error {
 	var newTargetEntity *entity.Entity
 	if b.click != nil {
 		defer func() { b.click = nil }()
-		p := world.CellToCenterPX(point.P{
-			X: b.click.X / world.CellSize,
-			Y: b.click.Y / world.CellSize,
-		})
 
+		cell := world.PXToCell(*b.click)
+		if !b.tr.InBounds(cell.X, cell.Y) || b.tr.Solid(cell.X, cell.Y) {
+			b.logger.Info("Clicked on solid terrain, no apple created", "cell", cell)
+			return nil
+		}
+		p := world.CellToCenterPX(point.P{
+			X: cell.X,
+			Y: cell.Y,
+		})
 		e, err := blueprint.NewApple(p, b.entityStore, b.componentFactory)
 		if err != nil {
 			return fmt.Errorf("failed to create apple entity at %v: %w", p, err)

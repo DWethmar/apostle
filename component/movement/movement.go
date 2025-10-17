@@ -32,7 +32,11 @@ func (m *Movement) Steps() int               { return m.steps }
 func (m *Movement) CurrentStep() int         { return m.currentStep }
 
 func (m *Movement) SetDestinationCell(dest point.P, steps int) {
-	m.originCell = m.destCell
+	if m.hasDestination {
+		m.originCell = m.destCell
+	} else {
+		m.originCell = dest
+	}
 	m.destCell = dest
 	m.steps = steps
 	m.currentStep = 0

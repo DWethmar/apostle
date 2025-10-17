@@ -45,7 +45,7 @@ func (l *Locomotion) Update() error {
 		}
 
 		if !m.HasDestination() {
-			m.SetDestinationCell(e.Pos().Divide(world.CellSize), 0) // Set current position as destination with 0 steps
+			m.SetDestinationCell(world.PXToCell(e.Pos()), 0) // Set current position as destination with 0 steps
 		}
 
 		// check if the entity has a path component
