@@ -80,18 +80,33 @@ func moves() map[direction.Direction]struct{ Dx, Dy int } {
 }
 
 func (a *AStar) Find(start, end point.P) []point.P {
-	startNode := &node{x: start.X, y: start.Y}
+	startNode := &node{
+		x:     start.X,
+		y:     start.Y,
+		gCost: 0,
+	}
 	goalX, goalY := end.X, end.Y
+
+	startNode.hCost = heuristic(startNode.x, startNode.y, goalX, goalY)
+	startNode.fCost = startNode.hCost
 
 	openSet := &priorityQueue{}
 	heap.Init(openSet)
 	heap.Push(openSet, startNode)
 
-	closedSet := make(map[[2]int]bool) // Using a map for closed set to track visited nodes
+	closedSet := make(map[[2]int]bool) // visited
+	bestG := make(map[[2]int]float64)  // best known gCost per coord
+	bestG[[2]int{startNode.x, startNode.y}] = 0.0
 
 	for openSet.Len() > 0 {
 		current := heap.Pop(openSet).(*node)
-		closedSet[[2]int{current.x, current.y}] = true
+
+		ck := [2]int{current.x, current.y}
+		// skip nodes that were already closed (outdated heap entries)
+		if closedSet[ck] {
+			continue
+		}
+		closedSet[ck] = true
 
 		if current.x == goalX && current.y == goalY {
 			return reconstructPath(current)
@@ -100,8 +115,9 @@ func (a *AStar) Find(start, end point.P) []point.P {
 		for dir, move := range moves() {
 			newX := current.x + move.Dx
 			newY := current.y + move.Dy
+			nk := [2]int{newX, newY}
 
-			if !a.terrain.InBounds(newX, newY) || closedSet[[2]int{newX, newY}] {
+			if !a.terrain.InBounds(newX, newY) || closedSet[nk] {
 				continue
 			}
 			if !a.terrain.Traversable(point.New(current.x, current.y), dir) {
@@ -114,24 +130,31 @@ func (a *AStar) Find(start, end point.P) []point.P {
 			}
 
 			stepCost := 1.0
-			if diagonal { // Diagonal moves have a higher cost
+			if diagonal {
 				stepCost = math.Sqrt2
 			}
 
-			gCost := current.gCost + stepCost
+			newG := current.gCost + stepCost
+
+			// if we've seen a better or equal gCost for this cell, skip
+			if prevG, ok := bestG[nk]; ok && newG >= prevG {
+				continue
+			}
+
+			bestG[nk] = newG
 			hCost := heuristic(newX, newY, goalX, goalY)
 			neighbor := &node{
 				x:      newX,
 				y:      newY,
-				gCost:  gCost,
+				gCost:  newG,
 				hCost:  hCost,
-				fCost:  gCost + hCost,
+				fCost:  newG + hCost,
 				parent: current,
 			}
 			heap.Push(openSet, neighbor)
 		}
 	}
-	return nil // no path found
+	return nil // no path
 }
 
 func reconstructPath(n *node) []point.P {
